@@ -19,6 +19,7 @@
 * [**Git log since and until**](#git-log-since-and-until)
 * [**Git log limit**](#git-log-limit)
 * [**Git pathspec**](#git-pathspec)
+* [**Git merge view strategy**](#git-merge-view-strategy)
 * [**Color themes**](#color-themes)
 
 [**Installation**](#installation)
@@ -26,6 +27,7 @@
 * [**UNIX and Linux**](#unix-and-linux)
 * [**macOS**](#macos-homebrew)
 * [**Windows**](#windows)
+* [**Docker**](#docker)
 
 [**System requirements**](#system-requirements)
 
@@ -158,6 +160,15 @@ You can also exclude files from the stats. Note that it works with any alphanume
 export _GIT_PATHSPEC=':!package-lock.json'
 ```
 
+### Git merge view strategy
+
+You can set the variable `_GIT_MERGE_VIEW` to enable merge commits to be part of the stats by setting `_GIT_MERGE_VIEW` to `enable`. You can also choose to only show merge commits by setting `_GIT_MERGE_VIEW` to `exclusive`. Default is to not show merge commits. These work similar to git's built-in `--merges` and `--no-merges` log options. 
+
+```bash
+export _GIT_MERGE_VIEW="enable"
+export _GIT_MERGE_VIEW="exclusive"
+```
+
 ### Color themes
 
 You can change to the legacy color scheme by toggling the variable `_MENU_THEME` between `default` and `legacy`
@@ -205,6 +216,14 @@ If you are installing with Cygwin, use these scripts:
 * [uninstaller](https://gist.github.com/arzzen/21c660014d0663b6c5710014714779d6)
 
 If you are wishing to use this with WSL, follow the UNIX and Linux instructions.
+
+### Docker
+
+You can use the Docker image provided:
+
+* Build: `docker build -t arzzen/git-quick-stats .`
+* Run interactive menu: `docker run --rm -it -v $(pwd):/git arzzen/git-quick-stats`
+* Docker pull command: `docker pull arzzen/git-quick-stats` [docker repository](https://hub.docker.com/r/arzzen/git-quick-stats)
 
 ## System requirements
 
@@ -260,7 +279,7 @@ make test
 
 MIT see [LICENSE][] for the full license text.
 
-   [read this page]: http://github.com/arzzen/git-quick-stats/blob/master/docs/CONTRIBUTING.md
+   [read this page]: http://github.com/arzzen/git-quick-stats/blob/master/.github/CONTRIBUTING.md
    [landing page]: http://arzzen.github.io/git-quick-stats
    [LICENSE]: https://github.com/arzzen/git-quick-stats/blob/master/LICENSE
 

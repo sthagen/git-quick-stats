@@ -8,23 +8,40 @@ set -o nounset
 set -o errexit
 
 # Beginning git log date. Respects all git datetime formats
+# If $_GIT_SINCE is never set, choose epoch time as that is
+# as far back as git will allow you to go
 _since=${_GIT_SINCE:-}
-[[ -n "${_since}" ]] && _since="--since=$_since"
+if [[ -n "${_since}" ]]; then
+    _since="--since=$_since"
+else
+    _since="--since=1970-01-01"
+fi
 
 # End of git log date. Respects all git datetime formats
+# If $_GIT_UNTIL is never set, choose the latest system
+# time from the user's current environment
 _until=${_GIT_UNTIL:-}
-[[ -n "${_until}" ]] && _until="--until=$_until"
+if [[ -n "${_until}" ]]; then
+    _until="--until=$_until"
+else
+    _until="--until=$(date)"
+fi
 
 # Set files or directories to be excluded in stats
+# If $_GIT_PATHSPEC is not set, shift over the option completely
 _pathspec=${_GIT_PATHSPEC:-}
-[[ -n "${_pathspec}" ]] && _pathspec="-- $_pathspec"
+if [[ -n "${_pathspec}" ]]; then
+    _pathspec="-- $_pathspec"
+else
+    _pathspec="--"
+fi
 
 # Set merge commit view strategy. Default is to show no merge commits
 # Exclusive shows only merge commits
 # Enable shows regular commits together with normal commits
 _merges=${_GIT_MERGE_VIEW:-}
 _merges=$(echo "$_merges" | awk '{print tolower($0)}')
-if [[ "${_merges}" == "exclusive" ]]; then 
+if [[ "${_merges}" == "exclusive" ]]; then
     _merges="--merges"
 elif [[ "${_merges}" == "enable" ]]; then
     _merges=""
@@ -34,10 +51,18 @@ fi
 
 # Limit git log output
 _limit=${_GIT_LIMIT:-}
-if [[ -n "${_limit}" ]]; then 
+if [[ -n "${_limit}" ]]; then
     _limit=$_limit
 else
     _limit=10
+fi
+
+# Log options
+_log_options=${_GIT_LOG_OPTIONS:-}
+if [[ -n "${_log_options}" ]]; then
+    _log_options=$_log_options
+else 
+    _log_options=""
 fi
 
 # Default menu theme
@@ -49,14 +74,14 @@ _theme="${_MENU_THEME:=default}"
 # ARGS: None
 # OUTS: None
 ################################################################################
-function checkUtils() {
-    local -r msg="not found. Please make sure this is installed and in PATH."
-    declare -ar utils=("awk" "basename" "cat" "column" "echo" "git" "grep" "head"
-        "seq" "sort" "tput" "tr" "uniq" "wc")
-    
-    for u in "${utils[@]}"
+checkUtils() {
+    readonly MSG="not found. Please make sure this is installed and in PATH."
+    readonly UTILS="awk basename cat column echo git grep head seq sort tput \
+		tr uniq wc"
+
+    for u in $UTILS
     do
-        command -v "$u" >/dev/null 2>&1 || { echo >&2 "$u ${msg}"; exit 1; }
+        command -v "$u" >/dev/null 2>&1 || { echo >&2 "$u ${MSG}"; exit 1; }
     done
 }
 
@@ -65,16 +90,16 @@ function checkUtils() {
 # ARGS: None
 # OUTS: None
 ################################################################################
-function usage() { 
-    local -r program=$(basename "$0")
+usage() {
+    readonly PROGRAM=$(basename "$0")
 
     echo "
 NAME
-    ${program} - Simple and efficient way to access various stats in a git repo
+    ${PROGRAM} - Simple and efficient way to access various stats in a git repo
 
 SYNOPSIS
-    For non-interactive mode: ${program} [OPTIONS]
-    For interactive mode: ${program}
+    For non-interactive mode: ${PROGRAM} [OPTIONS]
+    For interactive mode: ${PROGRAM}
 
 DESCRIPTION
     Any git repository contains tons of information about commits, contributors,
@@ -124,6 +149,8 @@ ADDITIONAL USAGE
         ex: export _GIT_SINCE=\"2017-01-20\"
     You can set _GIT_LIMIT for limited output log
         ex: export _GIT_LIMIT=20
+    You can set _GIT_LOG_OPTIONS for git log options
+        ex: export _GIT_LOG_OPTIONS=\"--ignore-all-space --ignore-blank-lines\"
     You can exclude directories or files from the stats by using pathspec
         ex: export _GIT_PATHSPEC=':!pattern'
     You can set _GIT_MERGE_VIEW to view merge commits with normal commits
@@ -139,55 +166,55 @@ ADDITIONAL USAGE
 # ARGS: None
 # OUTS: $opt: Option selected by the user based on menu choice
 ################################################################################
-function showMenu() {
-    local -r normal=$(tput sgr0)
-    local -r cyan=$(tput setaf 6)
-    local -r bold=$(tput bold)
-    local -r red=$(tput setaf 1)
-    local -r yellow=$(tput setaf 3)
-    local -r white=$(tput setaf 7)
-    local titles=""
-    local text=""
-    local nums=""
-    local help_txt=""
-    local exit_txt=""
+showMenu() {
+    NORMAL=$(tput sgr0)
+    CYAN=$(tput setaf 6)
+    BOLD=$(tput bold)
+    RED=$(tput setaf 1)
+    YELLOW=$(tput setaf 3)
+    WHITE=$(tput setaf 7)
+    TITLES=""
+    TEXT=""
+    NUMS=""
+    HELP_TXT=""
+    EXIT_TXT=""
 
     # Adjustable color menu option
     if [[ "${_theme}" == "legacy" ]]; then
-        titles="${bold}${red}" && readonly titles
-        text="${normal}${cyan}" && readonly text
-        nums="${bold}${yellow}" && readonly nums
-        help_txt="${normal}${yellow}" && readonly help_txt
-        exit_txt="${bold}${red}" && readonly exit_txt
+        TITLES="${BOLD}${RED}"
+        TEXT="${NORMAL}${CYAN}"
+        NUMS="${BOLD}${YELLOW}"
+        HELP_TXT="${NORMAL}${YELLOW}"
+        EXIT_TXT="${BOLD}${RED}"
     else
-        titles="${bold}${cyan}" && readonly titles
-        text="${normal}${white}" && readonly text
-        nums="${normal}${bold}${white}" && readonly nums
-        help_txt="${normal}${cyan}" && readonly help_txt
-        exit_txt="${bold}${cyan}" && readonly exit_txt
+        TITLES="${BOLD}${CYAN}"
+        TEXT="${NORMAL}${WHITE}"
+        NUMS="${NORMAL}${BOLD}${WHITE}"
+        HELP_TXT="${NORMAL}${CYAN}"
+        EXIT_TXT="${BOLD}${CYAN}"
     fi
-    
-    echo -e "\n${titles} Generate:${normal}"
-    echo -e "${nums}    1)${text} Contribution stats (by author)"
-    echo -e "${nums}    2)${text} Contribution stats (by author) on a specific branch"
-    echo -e "${nums}    3)${text} Git changelogs (last $_limit days)"
-    echo -e "${nums}    4)${text} Git changelogs by author"
-    echo -e "${nums}    5)${text} My daily status"
-    echo -e "${nums}    6)${text} Save git log output in JSON format"
-    echo -e "\n${titles} List:"
-    echo -e "${nums}    7)${text} Branch tree view (last $_limit)"
-    echo -e "${nums}    8)${text} All branches (sorted by most recent commit)"
-    echo -e "${nums}    9)${text} All contributors (sorted by name)"
-    echo -e "${nums}   10)${text} Git commits per author"
-    echo -e "${nums}   11)${text} Git commits per date"
-    echo -e "${nums}   12)${text} Git commits per month"
-    echo -e "${nums}   13)${text} Git commits per weekday"
-    echo -e "${nums}   14)${text} Git commits per hour"
-    echo -e "${nums}   15)${text} Git commits by author per hour"
-    echo -e "\n${titles} Suggest:"
-    echo -e "${nums}   16)${text} Code reviewers (based on git history)"
-    echo -e "\n${help_txt}Please enter a menu option or ${exit_txt}press Enter to exit."
-    echo -n "${text}> ${normal}"
+
+    printf %b "\\n${TITLES} Generate:${NORMAL}\\n"
+    printf %b "${NUMS}    1)${TEXT} Contribution stats (by author)\\n"
+    printf %b "${NUMS}    2)${TEXT} Contribution stats (by author) on a specific branch\\n"
+    printf %b "${NUMS}    3)${TEXT} Git changelogs (last $_limit days)\\n"
+    printf %b "${NUMS}    4)${TEXT} Git changelogs by author\\n"
+    printf %b "${NUMS}    5)${TEXT} My daily status\\n"
+    printf %b "${NUMS}    6)${TEXT} Save git log output in JSON format\\n"
+    printf %b "\\n${TITLES} List:\\n"
+    printf %b "${NUMS}    7)${TEXT} Branch tree view (last $_limit)\\n"
+    printf %b "${NUMS}    8)${TEXT} All branches (sorted by most recent commit)\\n"
+    printf %b "${NUMS}    9)${TEXT} All contributors (sorted by name)\\n"
+    printf %b "${NUMS}   10)${TEXT} Git commits per author\\n"
+    printf %b "${NUMS}   11)${TEXT} Git commits per date\\n"
+    printf %b "${NUMS}   12)${TEXT} Git commits per month\\n"
+    printf %b "${NUMS}   13)${TEXT} Git commits per weekday\\n"
+    printf %b "${NUMS}   14)${TEXT} Git commits per hour\\n"
+    printf %b "${NUMS}   15)${TEXT} Git commits by author per hour\\n"
+    printf %b "\\n${TITLES} Suggest:\\n"
+    printf %b "${NUMS}   16)${TEXT} Code reviewers (based on git history)\\n"
+    printf %b "\\n${HELP_TXT}Please enter a menu option or ${EXIT_TXT}press Enter to exit.\\n"
+    printf %b "${TEXT}> ${NORMAL}"
     read -r opt
 }
 
@@ -201,7 +228,7 @@ function optionPicked() {
     local -r red=$(tput setaf 1)
     local -r reset=$(tput sgr0)
     local msg=${*:-"${reset}Error: No message passed"}
-    
+
     echo -e "${bold}${red}${msg}${reset}\n"
 }
 
@@ -216,7 +243,7 @@ function detailedGitStats() {
     local is_branch_existing=false
     local branch="${1:-}"
     local _branch=""
-    
+
     # Check if requesting for a specific branch
     if [[ -n "${branch}" ]]; then
         # Check if branch exist
@@ -240,32 +267,39 @@ function detailedGitStats() {
 
     git -c log.showSignature=false log ${_branch} --use-mailmap $_merges --numstat \
         --pretty="format:commit %H%nAuthor: %aN <%aE>%nDate:   %ad%n%n%w(0,4,4)%B%n" \
-        $_since $_until $_pathspec | LC_ALL=C awk '
+        "$_since" "$_until" $_log_options $_pathspec | LC_ALL=C awk '
         function printStats(author) {
         printf "\t%s:\n", author
 
         if(more["total"] > 0) {
-            printf "\t  insertions:    %d (%.0f%%)\n", more[author], \
+            printf "\t  insertions:    %d\t(%.0f%%)\n", more[author], \
                 (more[author] / more["total"] * 100)
         }
 
         if(less["total"] > 0) {
-            printf "\t  deletions:     %d (%.0f%%)\n", less[author], \
+            printf "\t  deletions:     %d\t(%.0f%%)\n", less[author], \
                 (less[author] / less["total"] * 100)
         }
 
         if(file["total"] > 0) {
-            printf "\t  files:         %d (%.0f%%)\n", file[author], \
+            printf "\t  files:         %d\t(%.0f%%)\n", file[author], \
                 (file[author] / file["total"] * 100)
         }
 
         if(commits["total"] > 0) {
-            printf "\t  commits:       %d (%.0f%%)\n", commits[author], \
+            printf "\t  commits:       %d\t(%.0f%%)\n", commits[author], \
                 (commits[author] / commits["total"] * 100)
         }
 
         if (first[author] != "") {
-            printf "\t  lines changed: %s\n", more[author] + less[author]
+            if ( ((more["total"] + less["total"]) * 100) > 0) {
+                printf "\t  lines changed: %d\t", more[author] + less[author]
+                printf "(%.0f%%)\n", ((more[author] + less[author]) / \
+                                      (more["total"] + less["total"]) * 100)
+            }
+            else {
+                printf "\t  lines changed: %d\t(0%%)\n", (more[author] + less[author])
+            }
             printf "\t  first commit:  %s\n", first[author]
             printf "\t  last commit:   %s\n", last[author]
         }
@@ -289,8 +323,8 @@ function detailedGitStats() {
         /^[0-9]/ {
         more[author] += $1
         less[author] += $2
-        file[author] += 1
 
+        file[author] += 1
         more["total"]  += $1
         less["total"]  += $2
         file["total"]  += 1
@@ -313,8 +347,8 @@ function detailedGitStats() {
 ################################################################################
 function suggestReviewers() {
     optionPicked "Suggested code reviewers (based on git history):"
-    git -c log.showSignature=false log --use-mailmap $_merges $_since $_until \
-        --pretty=%aN $_pathspec | head -n 100 | sort | uniq -c | sort -nr | LC_ALL=C awk '
+    git -c log.showSignature=false log --use-mailmap $_merges "$_since" "$_until" \
+        --pretty=%aN $_log_options $_pathspec | head -n 100 | sort | uniq -c | sort -nr | LC_ALL=C awk '
     { args[NR] = $0; }
     END {
       for (i = 1; i <= NR; ++i) {
@@ -329,13 +363,13 @@ function suggestReviewers() {
 # OUTS: A JSON formatted file
 ################################################################################
 function jsonOutput() {
-    optionPicked "Output log saved to file at: ${json_path:?}/output.json"
-    git -c log.showSignature=false log --use-mailmap $_merges $_since $_until \
+    optionPicked "Output log saved to file at: ${json_path}/output.json"
+    git -c log.showSignature=false log --use-mailmap $_merges "$_since" "$_until" $_log_options \
         --pretty=format:'{%n  "commit": "%H",%n  "abbreviated_commit": "%h",%n  "tree": "%T",%n  "abbreviated_tree": "%t",%n  "parent": "%P",%n  "abbreviated_parent": "%p",%n  "refs": "%D",%n  "encoding": "%e",%n  "subject": "%s",%n  "sanitized_subject_line": "%f",%n  "body": "%b",%n  "commit_notes": "%N",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "date": "%aD"%n  },%n  "commiter": {%n    "name": "%cN",%n    "email": "%cE",%n    "date": "%cD"%n  }%n},' \
         | sed "$ s/,$//" \
         | sed ':a;N;$!ba;s/\r\n\([^{]\)/\\n\1/g' \
         | awk 'BEGIN { print("[") } { print($0) } END { print("]") }' \
-        > "${json_path:?}"/output.json
+        > "${json_path}/output.json"
 }
 
 ################################################################################
@@ -350,12 +384,12 @@ function commitsByMonth() {
     do
         echo -en "\t$i\t"
         git -c log.showSignature=false shortlog -n $_merges --format='%ad %s' \
-            $_since $_until | grep " $i " | wc -l
-    done | awk '{ 
-        count[$1] = $2 
-        total += $2 
-    } 
-    END{ 
+            "$_since" "$_until" $_log_options | grep " $i " | wc -l
+    done | awk '{
+        count[$1] = $2
+        total += $2
+    }
+    END{
         for (month in count) {
             s="|";
             if (total > 0) {
@@ -377,21 +411,21 @@ function commitsByMonth() {
 function commitsByWeekday() {
     optionPicked "Git commits by weekday:"
     echo -e "\tday\tsum"
+    local counter=1
     for i in Mon Tue Wed Thu Fri Sat Sun
     do
-        echo -en "\t$i\t"
+        echo -en "\t$counter\t$i\t"
         git -c log.showSignature=false shortlog -n $_merges --format='%ad %s' \
-            $_since $_until | grep "$i " | wc -l
+            "$_since" "$_until" $_log_options | grep "$i " | wc -l
+        counter=$((counter+1))
     done | awk '{
-
     }
-    NR == FNR { 
-        count[$1] = $2; 
-        total += $2;
-        next 
+    NR == FNR {
+        count[$1" "$2] = $3;
+        total += $3;
+        next
     }
-    END{ 
-        
+    END{
         for (day in count) {
             s="|";
             if (total > 0) {
@@ -399,10 +433,10 @@ function commitsByWeekday() {
                 for (i = 1; i <= percent; ++i) {
                     s=s"█"
                 }
-                printf( "\t%s\t%-0s\t%s\n", day, count[day], s );
+                printf("\t%s\t%s\t%-0s\t%s\n", substr(day,0,1), substr(day,3,5), count[day], s);
             }
         }
-    }' | sort -k 2 -n -r
+    }' | sort -k 1 -n | awk '{$1=""}1' | awk '{$1=$1}1' | awk '{printf("\t%s\t%s\t%s\n", $1, $2, $3)}'
 }
 
 ################################################################################
@@ -426,12 +460,12 @@ function commitsByHour() {
     do
         echo -ne "\t$i\t"
             git -c log.showSignature=false shortlog -n $_merges --format='%ad %s' \
-                "${_author}" $_since $_until | grep ' '$i: | wc -l
-    done | awk '{ 
-        count[$1] = $2 
-        total += $2 
-    } 
-    END{ 
+                "${_author}" "$_since" "$_until" $_log_options | grep ' '$i: | wc -l
+    done | awk '{
+        count[$1] = $2
+        total += $2
+    }
+    END{
         for (hour in count) {
             s="|";
             if (total > 0) {
@@ -453,8 +487,8 @@ function commitsByHour() {
 ################################################################################
 function commitsPerDay() {
     optionPicked "Git commits per date:";
-    git -c log.showSignature=false log --use-mailmap $_merges $_since $_until \
-        --date=short --format='%ad' $_pathspec | sort | uniq -c
+    git -c log.showSignature=false log --use-mailmap $_merges "$_since" "$_until" \
+        --date=short --format='%ad' $_log_options $_pathspec | sort | uniq -c
 }
 
 ################################################################################
@@ -466,9 +500,9 @@ function commitsPerDay() {
 function commitsPerAuthor()  {
     optionPicked "Git commits per author:"
     local authorCommits=$(git -c log.showSignature=false log --use-mailmap $_merges \
-      $_since $_until | grep -i Author: | cut -c9-)
+      "$_since" "$_until" $_log_options | grep -i Author: | cut -c9-)
     local coAuthorCommits=$(git -c log.showSignature=false log --use-mailmap $_merges \
-    $_since $_until | grep -i Co-Authored-by: | cut -c21-)
+    "$_since" "$_until" $_log_options | grep -i Co-Authored-by: | cut -c21-)
 
     if [[ -z "${coAuthorCommits}" ]]
     then
@@ -507,7 +541,7 @@ function myDailyStats() {
     echo -e "\t" $(git -c log.showSignature=false log --use-mailmap \
                        --author="$(git config user.name)" $_merges \
                        --since=$(date "+%Y-%m-%dT00:00:00") \
-                       --until=$(date "+%Y-%m-%dT23:59:59") --reverse \
+                       --until=$(date "+%Y-%m-%dT23:59:59") --reverse $_log_options \
                        | grep commit | wc -l) "commits"
 }
 
@@ -518,8 +552,8 @@ function myDailyStats() {
 ################################################################################
 function contributors() {
     optionPicked "All contributors (sorted by name):"
-    git -c log.showSignature=false log --use-mailmap $_merges $_since $_until \
-        --format='%aN' $_pathspec | sort -u | cat -n
+    git -c log.showSignature=false log --use-mailmap $_merges "$_since" "$_until" \
+        --format='%aN' $_log_options $_pathspec | sort -u | cat -n
 }
 
 ################################################################################
@@ -530,9 +564,9 @@ function contributors() {
 function branchTree() {
     optionPicked "Branching tree view:"
     git -c log.showSignature=false log --use-mailmap --graph --abbrev-commit \
-        $_since $_until --decorate \
+        "$_since" "$_until" --decorate \
         --format=format:'--+ Commit:  %h %n  | Date:    %aD (%ar) %n''  | Message: %s %d %n''  + Author:  %aN %n' \
-        --all | head -n $((_limit*5))
+        --all $_log_options | head -n $((_limit*5))
 }
 
 ################################################################################
@@ -568,7 +602,7 @@ function changelogs() {
         --use-mailmap \
         $_merges \
         --format="%cd" \
-        --date=short "${_author}" $_since $_until $_pathspec \
+        --date=short "${_author}" "$_since" "$_until" $_log_options $_pathspec \
         | sort -u -r | head -n $_limit \
         | while read DATE; do
               echo -e "\n[$DATE]"
@@ -596,7 +630,7 @@ if [[ "$#" -eq 1 ]]; then
         -T|--detailed-git-stats) detailedGitStats;;
         -R|--git-stats-by-branch)
             branch=""
-            while [[ -z "${branch}" ]]; do 
+            while [[ -z "${branch}" ]]; do
                 read -r -p "Which branch? " branch
             done
             detailedGitStats "${branch}";;
@@ -609,7 +643,7 @@ if [[ "$#" -eq 1 ]]; then
         -c|--changelogs) changelogs;;
         -L|--changelogs-by-author)
             author="${_GIT_AUTHOR:-}"
-            while [[ -z "${author}" ]]; do 
+            while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
             changelogs "${author}";;
@@ -617,15 +651,23 @@ if [[ "$#" -eq 1 ]]; then
         -o|--commits-by-hour) commitsByHour;;
         -A|--commits-by-author-by-hour)
             author="${_GIT_AUTHOR:-}"
-            while [[ -z "${author}" ]]; do 
+            while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
             commitsByHour "${author}";;
         -m|--commits-by-month) commitsByMonth;;
-        -j|--json-output) 
+        -j|--json-output)
             json_path=""
             while [[ -z "${json_path}" ]]; do
-                read -r -p "Path to save JSON file: " json_path
+                echo "NOTE: This feature is in beta!"
+                echo "The file name will be saved as \"output.json\"."
+                echo "The full path must be provided."
+                echo "Variables or shorthands such as ~ are not valid."
+                echo "You do not need the final slash at the end of a directory path."
+                echo "You must have write permission to the folder you are trying to save this to."
+                echo "This feature only works interactively and cannot be combined with other options."
+                echo -e "Example of a valid path: /home/$(whoami)\n"
+                read -r -p "Please provide the full path to directory to save JSON file: " json_path
                 if [[ ! -w "${json_path}" ]]; then
                     echo "Invalid path or permission denied to write to given area."
                     json_path=""
@@ -648,20 +690,28 @@ while [[ "${opt}" != "" ]]; do
     case "${opt}" in
         1) detailedGitStats; showMenu;;
         2) branch=""
-           while [[ -z "${branch}" ]]; do 
+           while [[ -z "${branch}" ]]; do
                read -r -p "Which branch? " branch
            done
            detailedGitStats "${branch}"; showMenu;;
         3) changelogs; showMenu;;
         4) author=""
-           while [[ -z "${author}" ]]; do 
+           while [[ -z "${author}" ]]; do
                read -r -p "Which author? " author
            done
            changelogs "${author}"; showMenu;;
         5) myDailyStats; showMenu;;
         6) json_path=""
            while [[ -z "${json_path}" ]]; do
-               read -r -p "Path to save JSON file: " json_path
+               echo "NOTE: This feature is in beta!"
+               echo "The file name will be saved as \"output.json\"."
+               echo "The full path must be provided."
+               echo "Variables, subshell commands, or shorthands such as ~ may not be valid."
+               echo "You do not need the final slash at the end of a directory path."
+               echo "You must have write permission to the folder you are trying to save this to."
+               echo "This feature only works interactively and cannot be combined with other options."
+               echo -e "Example of a valid path: /home/$(whoami)\n"
+               read -r -p "Please provide the full path to directory to save JSON file: " json_path
                if [[ ! -w "${json_path}" ]]; then
                    echo "Invalid path or permission denied to write to given area."
                    json_path=""
@@ -677,7 +727,7 @@ while [[ "${opt}" != "" ]]; do
        13) commitsByWeekday; showMenu;;
        14) commitsByHour; showMenu;;
        15) author=""
-           while [[ -z "${author}" ]]; do 
+           while [[ -z "${author}" ]]; do
                read -r -p "Which author? " author
            done
            commitsByHour "${author}"; showMenu;;

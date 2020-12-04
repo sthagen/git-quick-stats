@@ -1,5 +1,5 @@
 
-# GIT quick statistics [![Backers on Open Collective](https://opencollective.com/git-quick-stats/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/git-quick-stats/sponsors/badge.svg)](#sponsors) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Simple%20and%20efficient%20way%20to%20access%20various%20statistics%20in%20git%20repository&url=https://github.com/arzzen/git-quick-stat&via=arzzen&hashtags=git,stats,tool,statistics,developers) [![Travis](https://api.travis-ci.org/arzzen/git-quick-stats.svg?branch=master)](https://travis-ci.org/arzzen/git-quick-stats) [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/git-quick-stats.svg)](http://braumeister.org/formula/git-quick-stats) [![Linuxbrew package](https://repology.org/badge/version-for-repo/linuxbrew/git-quick-stats.svg)](https://repology.org/metapackage/git-quick-stats/packages)
+# GIT quick statistics [![Backers on Open Collective](https://opencollective.com/git-quick-stats/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/git-quick-stats/sponsors/badge.svg)](#sponsors) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Simple%20and%20efficient%20way%20to%20access%20various%20statistics%20in%20git%20repository&url=https://github.com/arzzen/git-quick-stat&via=arzzen&hashtags=git,stats,tool,statistics,developers) [![Travis](https://api.travis-ci.org/arzzen/git-quick-stats.svg?branch=master)](https://travis-ci.org/arzzen/git-quick-stats) [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/git-quick-stats.svg)](https://formulae.brew.sh/formula/git-quick-stats#default) [![Linuxbrew package](https://repology.org/badge/version-for-repo/linuxbrew/git-quick-stats.svg)](https://repology.org/metapackage/git-quick-stats/packages)
 
 > `git-quick-stats` is a simple and efficient way to access various statistics in a git repository.
 >
@@ -18,6 +18,7 @@
 * [**Command-line arguments**](#command-line-arguments)
 * [**Git log since and until**](#git-log-since-and-until)
 * [**Git log limit**](#git-log-limit)
+* [**Git log options**](#git-log-options)
 * [**Git pathspec**](#git-pathspec)
 * [**Git merge view strategy**](#git-merge-view-strategy)
 * [**Color themes**](#color-themes)
@@ -146,6 +147,14 @@ You can set variable `_GIT_LIMIT` for limited output. It will affect the "change
 export _GIT_LIMIT=20
 ```
 
+### Git log options
+
+You can set _GIT_LOG_OPTIONS for [git log options](https://git-scm.com/docs/git-log#_options):
+
+```bash
+export _GIT_LOG_OPTIONS="--ignore-all-space --ignore-blank-lines"
+```
+
 ### Git pathspec
 
 You can exclude a directory from the stats by using [pathspec](https://git-scm.com/docs/gitglossary#gitglossary-aiddefpathspecapathspec)
@@ -180,6 +189,14 @@ export _MENU_THEME=legacy
 ![legacyThemeScreenshot](https://user-images.githubusercontent.com/8818630/58364012-61e53800-7e7b-11e9-910a-aaff836260eb.png)
 
 ## Installation
+
+### Debian and Ubuntu
+
+If you are on at least Debian Bullseye or Ubuntu Focal you can use apt for installation:
+
+```bash
+apt install git-quick-stats
+```
 
 ### UNIX and Linux
 
@@ -239,6 +256,11 @@ You can use the Docker image provided:
 *Q:* I get some errors after run git-quick-stats in cygwin like `/usr/local/bin/git-quick-stats: line 2: $'\r': command not found`
 
 *A:* You can run the dos2unix app in cygwin as follows: `/bin/dos2unix.exe /usr/local/bin/git-quick-stats`. This will convert the script from the CR-LF convention that Microsoft uses to the LF convention that UNIX, OS X, and Linux use. You should then should be able to run it as normal.
+
+*Q:* How they could be used in a project with many git projects and statistics would show a summary of all git projects?
+
+*A:* If you want to include submodule logs, you can try using the following: `export _GIT_LOG_OPTIONS="-p --submodule=log"`
+(more info about [git log --submodule](https://git-scm.com/docs/git-log#Documentation/git-log.txt---submoduleltformatgt))
 
 ## Contribution
 

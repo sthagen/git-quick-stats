@@ -14,7 +14,7 @@ _since=${_GIT_SINCE:-}
 if [[ -n "${_since}" ]]; then
     _since="--since=$_since"
 else
-    _since="--since=1970-01-01"
+    _since="--since=2005-04-07"
 fi
 
 # End of git log date. Respects all git datetime formats
@@ -224,12 +224,9 @@ showMenu() {
 # OUTS: None
 ################################################################################
 function optionPicked() {
-    local -r bold=$(tput bold)
-    local -r red=$(tput setaf 1)
-    local -r reset=$(tput sgr0)
-    local msg=${*:-"${reset}Error: No message passed"}
+    local msg=${*:-"Error: No message passed"}
 
-    echo -e "${bold}${red}${msg}${reset}\n"
+    echo -e "${msg}\n"
 }
 
 ################################################################################
@@ -518,9 +515,9 @@ function commitsPerAuthor()  {
           sum[author[i]]++; name[author[i]] = author[i]; total++;
         }
         for(i in sum) {
-          printf "\t%d,%s,%2.1f%%\n", sum[i], name[i], (100 * sum[i] / total)
+          printf "\t%d:%s:%2.1f%%\n", sum[i], name[i], (100 * sum[i] / total)
         }
-      }' | sort -n -r | column -t -s,
+      }' | sort -n -r | column -t -s:
 }
 
 ################################################################################

@@ -119,24 +119,6 @@ function optionPicked() {
 }
 
 ################################################################################
-# DESC: Format date string
-# ARGS: $* (required): String
-# OUTS: String
-################################################################################
-function format_date() {
-    # NOTE: While this works where it's implemented within the changelogs()
-    # function the first time, it then bombs out when it reaches the -d flag
-    # in the second half of that same code as BSD date cannot handle -d, nor
-    # can it handle a string such as DATE - 1 day.
-    local date="${1}"
-    local outf="${2}"
-    local datef="${3:-"%b %d %H:%M:%S %Y %Z"}"  # Tue Oct 24 13:34:22 2023 +0300
-    local resp="$(date -d "${date}" "+${outf}")"
-
-    printf "%s" "${resp}"
-}
-
-################################################################################
 # DESC: Help information printed to stdout during non-interactive mode
 # ARGS: None
 # OUTS: None
@@ -416,8 +398,9 @@ function detailedGitStats() {
 # OUTS: None
 ################################################################################
 function changelogs() {
-    local author="${1:-}"
     local _author=""
+    local commits=""
+    local author="${1:-}"
     local next=$(date +%F)
 
     if [[ -z "${author}" ]]; then
@@ -435,14 +418,20 @@ function changelogs() {
         --date=short "${_author}" "$_since" "$_until" $_log_options $_pathspec \
         | sort -u -r | head -n $_limit \
         | while read DATE; do
-              day=$(format_date "$DATE" "%A" "%Y-%m-%d")
-              echo -e "\n[$DATE - $day]"
-              GIT_PAGER=cat git -c log.showSignature=false log \
-                                --use-mailmap $_merges \
-                                --format=" * %s (%aN)" "${_author}" \
-                                --since==$(date -d "$DATE - 1 day" +"%Y-%m-%d") --until=$next
-              next=$DATE
-          done
+            commits=$(git -c log.showSignature=false log \
+                --use-mailmap $_merges \
+                --format=" * %s (%aN)" "${_author}" \
+                --since="$DATE 00:00:00" --until="$DATE 23:59:59" \
+                --date-order)
+
+            if [[ -n "$commits" ]]; then
+                echo -e "\n[$DATE]"
+                echo "$commits"
+            else
+                echo "No commits found on $DATE"
+            fi
+            next=$DATE
+        done
 }
 
 ################################################################################

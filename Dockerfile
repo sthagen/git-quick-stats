@@ -23,5 +23,6 @@ ENV _GIT_SINCE= \
     TERM=xterm-256color
 
 WORKDIR /git
+RUN git config --global --add safe.directory /git
 ENTRYPOINT [ "/usr/local/bin/docker-entrypoint" ]
 CMD [ "/usr/bin/git", "quick-stats" ]

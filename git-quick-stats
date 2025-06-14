@@ -68,6 +68,14 @@ else
     _log_options=""
 fi
 
+# Ignore author regex
+_ignore_authors=${_GIT_IGNORE_AUTHORS:-}
+if [[ -n "${_ignore_authors}" ]]; then
+    _ignore_authors=$_ignore_authors
+else
+    _ignore_authors=""
+fi
+
 # Default menu theme
 # Set the legacy theme by typing "export _MENU_THEME=legacy"
 _theme="${_MENU_THEME:=default}"
@@ -209,7 +217,9 @@ ADDITIONAL USAGE
     You can set _MENU_THEME to display the legacy color scheme
         ex: export _MENU_THEME=legacy
     You can set _GIT_BRANCH to set the branch of the stats
-        ex: export _GIT_BRANCH=master"
+        ex: export _GIT_BRANCH=master
+    You can set _GIT_IGNORE_AUTHORS to filter out specific authors
+        ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\""
 }
 
 ################################################################################
@@ -274,6 +284,14 @@ function showMenu() {
     printf %b "\\n${HELP_TXT}Please enter a menu option or ${EXIT_TXT}press Enter to exit.\\n"
     printf %b "${TEXT}> ${NORMAL}"
     read -r opt
+}
+
+filter_ignored_authors() {
+    if [[ -n "$_ignore_authors" ]]; then
+        grep -Ev "$_ignore_authors"
+    else
+        cat
+    fi
 }
 
 ################################################################################
@@ -488,7 +506,7 @@ function csvOutput() {
     printf "files_per,commits,commits_per,lines_changed,lines_changed_per\n"
     git -c log.showSignature=false log ${_branch} --use-mailmap $_merges --numstat \
         --pretty="format:commit %H%nAuthor: %aN <%aE>%nDate:   %ad%n%n%w(0,4,4)%B%n" \
-        "$_since" "$_until" $_log_options $_pathspec | LC_ALL=C awk '
+        "$_since" "$_until" $_log_options $_pathspec | filter_ignored_authors | LC_ALL=C awk '
         function printStats(author) {
         printf "%s,", author
         if(more["total"] > 0) {
@@ -682,7 +700,7 @@ function branchesByDate() {
 function contributors() {
     optionPicked "All contributors (sorted by name):"
     git -c log.showSignature=false log --use-mailmap $_merges "$_since" "$_until" \
-        --format='%aN' $_log_options $_pathspec | sort -u | cat -n
+        --format='%aN' $_log_options $_pathspec | filter_ignored_authors | sort -u | cat -n
 }
 
 ################################################################################
@@ -698,7 +716,7 @@ function newContributors() {
     for c in $contributors; do
         local firstCommit=$(git -c log.showSignature=false log --author="$c" \
                          --reverse --use-mailmap $_merges "$_since" "$_until" \
-                         --format='%at' $_log_options $_pathspec | head -n 1)
+                         --format='%at' $_log_options $_pathspec | filter_ignored_authors | head -n 1)
         if [[ $firstCommit -ge $(date -d "$newDate" +%s) ]]; then
            echo "$c"
         fi
@@ -1008,7 +1026,7 @@ function suggestReviewers() {
     optionPicked "Suggested code reviewers (based on git history):"
     git -c log.showSignature=false log --use-mailmap $_merges "$_since" "$_until" \
         --pretty=%aN $_log_options $_pathspec | head -n 100 | sort | uniq -c \
-        | sort -nr | LC_ALL=C awk '
+        | filter_ignored_authors | sort -nr | LC_ALL=C awk '
     { args[NR] = $0; }
     END {
       for (i = 1; i <= NR; ++i) {

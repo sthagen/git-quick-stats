@@ -1,6 +1,6 @@
 # GIT quick statistics [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Simple%20and%20efficient%20way%20to%20access%20various%20statistics%20in%20git%20repository&url=https://github.com/arzzen/git-quick-stat&via=arzzen&hashtags=git,stats,tool,statistics,developers)
 
-[![Backers on Open Collective](https://opencollective.com/git-quick-stats/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/git-quick-stats/sponsors/badge.svg)](#sponsors)  [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/git-quick-stats.svg)](https://formulae.brew.sh/formula/git-quick-stats#default)
+[![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/git-quick-stats.svg)](https://formulae.brew.sh/formula/git-quick-stats#default)
 
 > `git-quick-stats` is a simple and efficient way to access various statistics in a git repository.
 >
@@ -14,34 +14,34 @@
 
 [**Usage**](#usage)
 
-* [**Interactive**](#interactive)
-* [**Non-interactive**](#non-interactive)
-* [**Command-line arguments**](#command-line-arguments)
-* [**Git log since and until**](#git-log-since-and-until)
-* [**Git log limit**](#git-log-limit)
-* [**Git log options**](#git-log-options)
-* [**Git pathspec**](#git-pathspec)
-* [**Git merge view strategy**](#git-merge-view-strategy)
-* [**Color themes**](#color-themes)
+- [**Interactive**](#interactive)
+- [**Non-interactive**](#non-interactive)
+- [**Command-line arguments**](#command-line-arguments)
+- [**Git log since and until**](#git-log-since-and-until)
+- [**Git log limit**](#git-log-limit)
+- [**Git log options**](#git-log-options)
+- [**Git pathspec**](#git-pathspec)
+- [**Git merge view strategy**](#git-merge-view-strategy)
+- [**Color themes**](#color-themes)
 
 [**Installation**](#installation)
 
-* [**UNIX and Linux**](#unix-and-linux)
-* [**macOS**](#macos-homebrew)
-* [**Windows**](#windows)
-* [**Docker**](#docker)
+- [**UNIX and Linux**](#unix-and-linux)
+- [**macOS**](#macos-homebrew)
+- [**Windows**](#windows)
+- [**Docker**](#docker)
 
 [**System requirements**](#system-requirements)
 
-* [**Dependencies**](#dependencies)
+- [**Dependencies**](#dependencies)
 
 [**FAQ**](#faq)
 
 [**Contribution**](#contribution)
 
-* [**Code reviews**](#code-reviews)
-* [**Some tips for good pull requests**](#some-tips-for-good-pull-requests)
-* [**Formatting**](#formatting)
+- [**Code reviews**](#code-reviews)
+- [**Some tips for good pull requests**](#some-tips-for-good-pull-requests)
+- [**Formatting**](#formatting)
 
 [**Tests**](#tests)
 
@@ -49,8 +49,8 @@
 
 [**Contributors**](#contributors)
 
-* [**Backers**](#backers)
-* [**Sponsors**](#sponsors)
+- [**Backers**](#backers)
+- [**Sponsors**](#sponsors)
 
 ## Screenshots
 
@@ -227,7 +227,7 @@ apt install git-quick-stats
 ### UNIX and Linux
 
 ```bash
-git clone https://github.com/arzzen/git-quick-stats.git && cd git-quick-stats
+git clone https://github.com/git-quick-stats/git-quick-stats.git && cd git-quick-stats
 sudo make install
 ```
 
@@ -271,8 +271,8 @@ based on the shell of your choice.
 
 If you are installing with Cygwin, use these scripts:
 
-* [installer](https://gist.github.com/arzzen/35e09866dfdadf2108b2420045739245)
-* [uninstaller](https://gist.github.com/arzzen/21c660014d0663b6c5710014714779d6)
+- [installer](https://gist.github.com/arzzen/35e09866dfdadf2108b2420045739245)
+- [uninstaller](https://gist.github.com/arzzen/21c660014d0663b6c5710014714779d6)
 
 If you are wishing to use this with WSL, follow the UNIX and Linux instructions.
 
@@ -280,14 +280,14 @@ If you are wishing to use this with WSL, follow the UNIX and Linux instructions.
 
 You can use the Docker image provided:
 
-* Build: `docker build -t arzzen/git-quick-stats .`
-* Run interactive menu: `docker run --rm -it -v $(pwd):/git arzzen/git-quick-stats`
-* Docker pull command: `docker pull arzzen/git-quick-stats` [docker repository](https://hub.docker.com/r/arzzen/git-quick-stats)
+- Build: `docker build -t arzzen/git-quick-stats .`
+- Run interactive menu: `docker run --rm -it -v $(pwd):/git arzzen/git-quick-stats`
+- Docker pull command: `docker pull arzzen/git-quick-stats` [docker repository](https://hub.docker.com/r/arzzen/git-quick-stats)
 
 ## System requirements
 
-* An OS with a Bash shell
-* Tools we use:
+- An OS with a Bash shell
+- Tools we use:
 
 ```bash
 awk
@@ -309,21 +309,21 @@ uniq
 
 ### Dependencies
 
-* [`bsdextrautils`](https://packages.debian.org/sid/bsdextrautils) `apt install bsdextrautils`
-* [`coreutils`](https://packages.debian.org/sid/coreutils) `apt install coreutils`
-* [`gawk`](https://packages.debian.org/sid/gawk) `apt install gawk`
-* [`grep`](https://packages.debian.org/sid/grep) `apt install grep`
-* [`ncurses-bin`](https://packages.debian.org/sid/ncurses-bin) `apt install ncurses-bin`
+- [`bsdextrautils`](https://packages.debian.org/sid/bsdextrautils) `apt install bsdextrautils`
+- [`coreutils`](https://packages.debian.org/sid/coreutils) `apt install coreutils`
+- [`gawk`](https://packages.debian.org/sid/gawk) `apt install gawk`
+- [`grep`](https://packages.debian.org/sid/grep) `apt install grep`
+- [`ncurses-bin`](https://packages.debian.org/sid/ncurses-bin) `apt install ncurses-bin`
 
 ## FAQ
 
-*Q:* I get some errors after run git-quick-stats in cygwin like `/usr/local/bin/git-quick-stats: line 2: $'\r': command not found`
+_Q:_ I get some errors after run git-quick-stats in cygwin like `/usr/local/bin/git-quick-stats: line 2: $'\r': command not found`
 
-*A:* You can run the dos2unix app in cygwin as follows: `/bin/dos2unix.exe /usr/local/bin/git-quick-stats`. This will convert the script from the CR-LF convention that Microsoft uses to the LF convention that UNIX, OS X, and Linux use. You should then should be able to run it as normal.
+_A:_ You can run the dos2unix app in cygwin as follows: `/bin/dos2unix.exe /usr/local/bin/git-quick-stats`. This will convert the script from the CR-LF convention that Microsoft uses to the LF convention that UNIX, OS X, and Linux use. You should then should be able to run it as normal.
 
-*Q:* How they could be used in a project with many git projects and statistics would show a summary of all git projects?
+_Q:_ How they could be used in a project with many git projects and statistics would show a summary of all git projects?
 
-*A:* If you want to include submodule logs, you can try using the following: `export _GIT_LOG_OPTIONS="-p --submodule=log"`
+_A:_ If you want to include submodule logs, you can try using the following: `export _GIT_LOG_OPTIONS="-p --submodule=log"`
 (more info about [git log --submodule](https://git-scm.com/docs/git-log#Documentation/git-log.txt---submoduleltformatgt))
 
 ## Contribution
@@ -337,13 +337,13 @@ We use GitHub pull requests for this purpose.
 
 ### Some tips for good pull requests
 
-* Use our code </br>
+- Use our code </br>
   When in doubt, try to stay true to the existing code of the project.
-* Write a descriptive commit message. What problem are you solving and what
+- Write a descriptive commit message. What problem are you solving and what
   are the consequences? Where and what did you test? Some good tips:
   [here](http://robots.thoughtbot.com/5-useful-tips-for-a-better-commit-message)
   and [here](https://www.kernel.org/doc/Documentation/SubmittingPatches).
-* If your PR consists of multiple commits which are successive improvements /
+- If your PR consists of multiple commits which are successive improvements /
   fixes to your first commit, consider squashing them into a single commit
   (`git rebase -i`) such that your PR is a single commit on top of the current
   HEAD. This make reviewing the code so much easier, and our history more
@@ -365,15 +365,15 @@ make test
 
 MIT see [LICENSE][] for the full license text.
 
-   [read this page]: http://github.com/arzzen/git-quick-stats/blob/master/.github/CONTRIBUTING.md
-   [landing page]: http://arzzen.github.io/git-quick-stats
-   [LICENSE]: https://github.com/arzzen/git-quick-stats/blob/master/LICENSE
+[read this page]: http://github.com/git-quick-stats/git-quick-stats/blob/master/.github/CONTRIBUTING.md
+[landing page]: https://git-quick-stats.sh
+[LICENSE]: https://github.com/git-quick-stats/git-quick-stats/blob/master/LICENSE
 
 ## Contributors
 
 This project exists thanks to all the people who contribute.
 
-[![contributors](https://opencollective.com/git-quick-stats/contributors.svg?width=890&button=false)](https://github.com/arzzen/git-quick-stats/graphs/contributors)
+[![contributors](https://opencollective.com/git-quick-stats/contributors.svg?width=890&button=false)](https://github.com/git-quick-stats/git-quick-stats/graphs/contributors)
 
 ### Backers
 

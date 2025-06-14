@@ -1,4 +1,4 @@
-.TH git-quick-stats "1" "April 2024" "git-quick-stats" "User Commands"
+.TH git-quick-stats "1" "June 2025" "git-quick-stats" "User Commands"
 .SH NAME
 .B git\-quick\-stats
 \- Simple and efficient way to access various stats in a git repository.
@@ -124,6 +124,11 @@ displays a list of commits per timezone
 .IP
 displays a list of commits per timezone by author
 .HP
+.PP
+\fB\-\-activity\-calendar\fR
+.IP
+displays a calendar-style grid of commit activity per day-of-week and month for a selected author.
+.HP
 .SH SUGGEST OPTIONS
 .PP
 \fB\-r\fR, \fB\-\-suggest\-reviewers\fR
@@ -167,5 +172,35 @@ You can switch to the legacy color scheme, example:
 You can set _GIT_BRANCH to set the branch of the stats, example:
 .PP
 .B  export _GIT_BRANCH="master"
+.PP
+.SH Calendar activity output
+.PP
+\fBactivity-calendar\fR outputs a visual grid of commit activity for a selected author, grouped by day-of-week (rows: Mon..Sun) and month (columns: Jan..Dec). Each cell is 3 characters wide, separated by one space.
+.PP
+Sample output:
+.PP
+.nf
+      Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+Mon   ▓▓▓ ░░░ ▒▒▒ ░░░ ░░░ ▒▒▒ ▓▓▓ ░░░ ░░░ ▓▓▓ ▒▒▒ ▒▒▒
+Tue   ▒▒▒ ░░░ ▒▒▒ ░░░ ▒▒▒ ░░░ ▒▒▒ ▓▓▓ ▒▒▒ ░░░ ░░░ ░░░
+Wed   ░░░ ▓▓▓ ░░░ ▓▓▓ ▒▒▒ ░░░ ░░░ ▒▒▒ ░░░ ░░░ ▓▓▓ ░░░
+Thu   ░░░ ▒▒▒ ░░░ ░░░ ▒▒▒ ░░░ ▓▓▓ ▒▒▒ ▒▒▒ ░░░ ░░░ ▒▒▒
+Fri   ▒▒▒ ░░░ ▒▒▒ ▓▓▓ ░░░ ▓▓▓ ▒▒▒ ░░░ ▒▒▒ ░░░ ▒▒▒ ░░░
+Sat   ░░░ ░░░ ▒▒▒ ░░░ ░░░ ░░░ ▒▒▒ ░░░ ▒▒▒ ▓▓▓ ▒▒▒ ░░░
+Sun   ▓▓▓ ░░░ ▓▓▓ ░░░ ░░░ ▓▓▓ ░░░ ▒▒▒ ░░░ ░░░ ▓▓▓ ░░░
+
+Legend: ... = 0   ░░░ = 1–2   ▒▒▒ = 3–5   ▓▓▓ = 6+ commits
+.PP
+You can set _GIT_IGNORE_AUTHORS to filter out specific authors, example:
+.PP
+.B  export _GIT_IGNORE_AUTHORS="(author@examle.com|username)"
 .
 .fi
+
+.PP
+.SH SEE ALSO
+.BR git (1)
+.PP
+Project homepage:
+.UR https://github.com/git-quick-stats/git-quick-stats
+.UE

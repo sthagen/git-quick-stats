@@ -30,8 +30,8 @@ uninstall:
 	@$(TASK_DONE)
 
 reinstall:
-	@curl -sO https://raw.githubusercontent.com/arzzen/git-quick-stats/master/git-quick-stats
-	@curl -sO https://raw.githubusercontent.com/arzzen/git-quick-stats/master/git-quick-stats.1
+	@curl -sO https://raw.githubusercontent.com/git-quick-stats/git-quick-stats/master/git-quick-stats
+	@curl -sO https://raw.githubusercontent.com/git-quick-stats/git-quick-stats/master/git-quick-stats.1
 	$(MAKE) install
 	@$(TASK_DONE)
 

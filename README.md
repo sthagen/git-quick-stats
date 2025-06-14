@@ -204,6 +204,12 @@ You can set the variable `_GIT_BRANCH` to set the branch of the stats. Works wit
 export _GIT_BRANCH="master"
 ```
 
+You can set the variable `_GIT_IGNORE_AUTHORS` to filter out specific authors. It will affect the "All contributors", ""Suggested code reviewers" and "New contributors" options.
+
+```bash
+export _GIT_IGNORE_AUTHORS="(author@examle.com|username)"
+```
+
 ### Color themes
 
 You can change to the legacy color scheme by toggling the variable `_MENU_THEME` between `default` and `legacy`

@@ -173,7 +173,7 @@ You can set _GIT_BRANCH to set the branch of the stats, example:
 .PP
 .B  export _GIT_BRANCH="master"
 .PP
-.SH CALENDAR ACTIVITY OUTPUT
+.SH Calendar activity output
 .PP
 \fBactivity-calendar\fR outputs a visual grid of commit activity for a selected author, grouped by day-of-week (rows: Mon..Sun) and month (columns: Jan..Dec). Each cell is 3 characters wide, separated by one space.
 .PP
@@ -190,6 +190,11 @@ Sat   ░░░ ░░░ ▒▒▒ ░░░ ░░░ ░░░ ▒▒▒ ░�
 Sun   ▓▓▓ ░░░ ▓▓▓ ░░░ ░░░ ▓▓▓ ░░░ ▒▒▒ ░░░ ░░░ ▓▓▓ ░░░
 
 Legend: ... = 0   ░░░ = 1–2   ▒▒▒ = 3–5   ▓▓▓ = 6+ commits
+.PP
+You can set _GIT_IGNORE_AUTHORS to filter out specific authors, example:
+.PP
+.B  export _GIT_IGNORE_AUTHORS="(author@examle.com|username)"
+.
 .fi
 
 .PP

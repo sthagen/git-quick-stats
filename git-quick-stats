@@ -80,6 +80,56 @@ fi
 # Set the legacy theme by typing "export _MENU_THEME=legacy"
 _theme="${_MENU_THEME:=default}"
 
+# DESC: Shows a calendar heatmap of commits per day-of-week per month for a given author
+# ARGS: $author (required)
+function commitsCalendarByAuthor() {
+    local author="${1:-}"
+    [[ -z "$author" ]] && { echo "Usage: commitsCalendarByAuthor <author>"; return 1; }
+
+    optionPicked "Commit Activity Calendar for '$author'"
+
+    # Print header
+    printf "\n      Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec\n"
+
+    # Gather commit counts
+    git -c log.showSignature=false log --use-mailmap $_merges \
+        --date=iso --author="$author" "$_since" "$_until" $_log_options \
+        --pretty='%ad' $_pathspec | awk '
+        {
+            split($0, a, " ");
+            # a[1] = YYYY-MM-DD
+            split(a[1], date_fields, "-");
+            mon = date_fields[2] + 0;
+            cmd = "date -d \"" a[1] "\" +%u";
+            cmd | getline weekday;
+            close(cmd);
+            # weekday: 1=Mon, ..., 7=Sun
+            count[weekday][mon]++;
+        }
+        END {
+            # Output matrix
+            for (d=1; d<=7; d++) {
+                if (d==1) printf "Mon   ";
+                else if (d==2) printf "Tue   ";
+                else if (d==3) printf "Wed   ";
+                else if (d==4) printf "Thu   ";
+                else if (d==5) printf "Fri   ";
+                else if (d==6) printf "Sat   ";
+                else if (d==7) printf "Sun   ";
+                for (m=1; m<=12; m++) {
+                    c = count[d][m]+0;
+                    if (c==0)       out="...";
+                    else if (c<=9)  out="░░░";
+                    else if (c<=19)  out="▒▒▒";
+                    else            out="▓▓▓";
+                    printf "%s%s", out, (m<12?" ":"\n");
+                }
+            }
+            printf "\nLegend: ... = 0   ░░░ = 1–9   ▒▒▒ = 10–19   ▓▓▓ = 20+ commits\n";
+        }
+    '
+}
+
 ################################################################################
 # HELPER AND MENU FUNCTIONS
 
@@ -281,6 +331,8 @@ function showMenu() {
     printf %b "${NUMS}   21)${TEXT} Git commits per timezone by author\\n"
     printf %b "\\n${TITLES} Suggest:\\n"
     printf %b "${NUMS}   22)${TEXT} Code reviewers (based on git history)\\n"
+    printf %b "\\n${TITLES} Calendar:\\n"
+    printf %b "${NUMS}   23)${TEXT} Activity calendar by author\\n"
     printf %b "\\n${HELP_TXT}Please enter a menu option or ${EXIT_TXT}press Enter to exit.\\n"
     printf %b "${TEXT}> ${NORMAL}"
     read -r opt
@@ -1134,6 +1186,13 @@ if [[ "$#" -eq 1 ]]; then
                 read -r -p "Which author? " author
             done
             commitsByTimezone "${author}";;
+        # ACTIVITY OPTIONS
+        -k|--commits-calendar-by-author)
+            author="${_GIT_AUTHOR:-}"
+            while [[ -z "${author}" ]]; do
+                read -r -p "Which author? " author
+            done
+            commitsCalendarByAuthor "${author}";;
         # SUGGEST OPTIONS
         -r|--suggest-reviewers) suggestReviewers;;
         -h|-\?|--help) usage;;
@@ -1220,6 +1279,11 @@ while [[ "${opt}" != "" ]]; do
            done
            commitsByTimezone "${author}"; showMenu;;
        22) suggestReviewers; showMenu;;
+       23) author=""
+            while [[ -z "${author}" ]]; do
+                read -r -p "Which author? " author
+            done
+            commitsCalendarByAuthor "${author}"; showMenu;;
        q|"\n") exit;;
        *) clear; optionPicked "Pick an option from the menu"; showMenu;;
     esac

@@ -1,6 +1,6 @@
 # GIT quick statistics [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Simple%20and%20efficient%20way%20to%20access%20various%20statistics%20in%20git%20repository&url=https://github.com/arzzen/git-quick-stat&via=arzzen&hashtags=git,stats,tool,statistics,developers)
 
-[![Backers on Open Collective](https://opencollective.com/git-quick-stats/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/git-quick-stats/sponsors/badge.svg)](#sponsors) [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/git-quick-stats.svg)](https://formulae.brew.sh/formula/git-quick-stats#default)
+[![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/git-quick-stats.svg)](https://formulae.brew.sh/formula/git-quick-stats#default)
 
 > `git-quick-stats` is a simple and efficient way to access various statistics in a git repository.
 >
@@ -233,7 +233,7 @@ apt install git-quick-stats
 ### UNIX and Linux
 
 ```bash
-git clone https://github.com/arzzen/git-quick-stats.git && cd git-quick-stats
+git clone https://github.com/git-quick-stats/git-quick-stats.git && cd git-quick-stats
 sudo make install
 ```
 
@@ -371,15 +371,15 @@ make test
 
 MIT see [LICENSE][] for the full license text.
 
-[read this page]: http://github.com/arzzen/git-quick-stats/blob/master/.github/CONTRIBUTING.md
-[landing page]: http://arzzen.github.io/git-quick-stats
-[LICENSE]: https://github.com/arzzen/git-quick-stats/blob/master/LICENSE
+[read this page]: http://github.com/git-quick-stats/git-quick-stats/blob/master/.github/CONTRIBUTING.md
+[landing page]: https://git-quick-stats.sh
+[LICENSE]: https://github.com/git-quick-stats/git-quick-stats/blob/master/LICENSE
 
 ## Contributors
 
 This project exists thanks to all the people who contribute.
 
-[![contributors](https://opencollective.com/git-quick-stats/contributors.svg?width=890&button=false)](https://github.com/arzzen/git-quick-stats/graphs/contributors)
+[![contributors](https://opencollective.com/git-quick-stats/contributors.svg?width=890&button=false)](https://github.com/git-quick-stats/git-quick-stats/graphs/contributors)
 
 ### Backers
 

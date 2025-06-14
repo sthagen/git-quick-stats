@@ -83,10 +83,6 @@ function commitsCalendarByAuthor() {
     # Print header
     printf "\n      Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec\n"
 
-    # Map days to numbers for easier awk processing
-    local days=(Mon Tue Wed Thu Fri Sat Sun)
-    local months=(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
-
     # Gather commit counts
     git -c log.showSignature=false log --use-mailmap $_merges \
         --date=iso --author="$author" "$_since" "$_until" $_log_options \

@@ -27,7 +27,7 @@ _until=${_GIT_UNTIL:-}
 if [[ -n "${_until}" ]]; then
     _until="--until=$_until"
 else
-    _until="--until=$(date '+%a, %d %b %Y %H:%M:%S %Z')"
+    _until="--until=$(LC_TIME=C date '+%a, %d %b %Y %H:%M:%S %Z')"
 fi
 
 # Set files or directories to be excluded in stats

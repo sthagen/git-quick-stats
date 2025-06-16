@@ -1179,30 +1179,30 @@ fi
 
 
 # Parse non-interactive commands
-while [[ $# -gt 0 ]]; do
+if [[ "$#" -eq 1 ]]; then
     case "$1" in
         # GENERATE OPTIONS
-        -T|--detailed-git-stats) detailedGitStats; shift;;
+        -T|--detailed-git-stats) detailedGitStats;;
         -R|--git-stats-by-branch)
             branch="${_GIT_BRANCH:-}"
             while [[ -z "${branch}" ]]; do
                 read -r -p "Which branch? " branch
             done
-            detailedGitStats "${branch}"; shift;;
-        -c|--changelogs) changelogs; shift;;
+            detailedGitStats "${branch}";;
+        -c|--changelogs) changelogs;;
         -L|--changelogs-by-author)
             author="${_GIT_AUTHOR:-}"
             while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
-            changelogs "${author}"; shift;;
-        -S|--my-daily-stats) myDailyStats; shift;;
+            changelogs "${author}";;
+        -S|--my-daily-stats) myDailyStats;;
         -V|--csv-output-by-branch)
             branch="${_GIT_BRANCH:-}"
             while [[ -z "${branch}" ]]; do
                 read -r -p "Which branch? " branch
             done
-            csvOutput "${branch}"; shift;;
+            csvOutput "${branch}";;
         -j|--json-output)
             json_path=""
             while [[ -z "${json_path}" ]]; do
@@ -1220,11 +1220,11 @@ while [[ $# -gt 0 ]]; do
                     json_path=""
                 fi
             done
-            jsonOutput "${json_path}"; shift;;
+            jsonOutput "${json_path}";;
         # LIST OPTIONS
-        -b|--branch-tree) branchTree; shift;;
-        -D|--branches-by-date) branchesByDate; shift;;
-        -C|--contributors) contributors; shift;;
+        -b|--branch-tree) branchTree;;
+        -D|--branches-by-date) branchesByDate;;
+        -C|--contributors) contributors;;
         -n|--new-contributors)
             newDate=""
             while [[ -z "${newDate}" ]]; do
@@ -1238,46 +1238,47 @@ while [[ $# -gt 0 ]]; do
                    newDate=""
                 fi
             done
-            newContributors "${newDate}"; shift;;
-        -a|--commits-per-author) commitsPerAuthor; shift;;
-        -d|--commits-per-day) commitsPerDay; shift;;
-        -Y|--commits-by-year ) commitsByYear; shift;;
-        -m|--commits-by-month) commitsByMonth; shift;;
-        -w|--commits-by-weekday) commitsByWeekday; shift;;
+            newContributors "${newDate}";;
+        -a|--commits-per-author) commitsPerAuthor;;
+        -d|--commits-per-day) commitsPerDay;;
+        -Y|--commits-by-year ) commitsByYear;;
+        -m|--commits-by-month) commitsByMonth;;
+        -w|--commits-by-weekday) commitsByWeekday;;
         -W|--commits-by-author-by-weekday)
             author="${_GIT_AUTHOR:-}"
             while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
-            commitsByWeekday "${author}"; shift;;
-        -o|--commits-by-hour) commitsByHour; shift;;
+            commitsByWeekday "${author}";;
+        -o|--commits-by-hour) commitsByHour;;
         -A|--commits-by-author-by-hour)
             author="${_GIT_AUTHOR:-}"
             while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
-            commitsByHour "${author}"; shift;;
-        -z|--commits-by-timezone) commitsByTimezone; shift;;
+            commitsByHour "${author}";;
+        -z|--commits-by-timezone) commitsByTimezone;;
         -Z|--commits-by-author-by-timezone)
             author="${_GIT_AUTHOR:-}"
             while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
-            commitsByTimezone "${author}"; shift;;
+            commitsByTimezone "${author}";;
         # ACTIVITY OPTIONS
         -k|--commits-calendar-by-author)
             author="${_GIT_AUTHOR:-}"
             while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
-            commitsCalendarByAuthor "${author}"; shift;;
+            commitsCalendarByAuthor "${author}";;
         # SUGGEST OPTIONS
-        -r|--suggest-reviewers) suggestReviewers; shift;;
-        -h|-\?|--help) usage; shift;;
+        -r|--suggest-reviewers) suggestReviewers;;
+        -h|-\?|--help) usage;;
         *) echo "Invalid argument: $1"; usage; exit 1;;
     esac
     exit 0;
-done
+fi
+[[ "$#" -gt 1 ]] && { echo "Invalid arguments"; usage; exit 1; }
 
 # If no args, run interactive mode
 if [[ "$#" -eq 0 ]]; then

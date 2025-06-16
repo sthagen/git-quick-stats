@@ -1362,9 +1362,9 @@ if [[ "$#" -eq 0 ]]; then
                 while [[ -z "${author}" ]]; do
                     read -r -p "Which author? " author
                 done
-                commitsCalendarByAuthor "${author}"; showMenu;;\
-           q|"\n") exit;;\
-           *) clear; optionPicked "Pick an option from the menu"; showMenu;;\
+                commitsCalendarByAuthor "${author}"; showMenu;;
+           q|"\n") exit;;
+           *) clear; optionPicked "Pick an option from the menu"; showMenu;;
         esac
     done
 fi

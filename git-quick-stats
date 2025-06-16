@@ -456,7 +456,7 @@ function detailedGitStats() {
                     lines_changed, file[author]+0, first[author], last[author];
             }
         }' |
-    eval "$sort_command" |
+    eval "$sort_command" | filter_ignored_authors | 
     LC_ALL=C awk '
         # This second awk script stores data, calculates totals, and then formats output with graphs
         BEGIN {

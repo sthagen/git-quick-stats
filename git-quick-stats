@@ -292,19 +292,29 @@ function showMenu() {
     EXIT_TXT=""
 
     # Adjustable color menu option
-    if [[ "${_theme}" == "legacy" ]]; then
-        TITLES="${BOLD}${RED}"
-        TEXT="${NORMAL}${CYAN}"
-        NUMS="${BOLD}${YELLOW}"
-        HELP_TXT="${NORMAL}${YELLOW}"
-        EXIT_TXT="${BOLD}${RED}"
-    else
-        TITLES="${BOLD}${CYAN}"
-        TEXT="${NORMAL}${WHITE}"
-        NUMS="${NORMAL}${BOLD}${WHITE}"
-        HELP_TXT="${NORMAL}${CYAN}"
-        EXIT_TXT="${BOLD}${CYAN}"
-    fi
+    case "${_theme}"  in
+        "legacy" )
+            TITLES="${BOLD}${RED}"
+            TEXT="${NORMAL}${CYAN}"
+            NUMS="${BOLD}${YELLOW}"
+            HELP_TXT="${NORMAL}${YELLOW}"
+            EXIT_TXT="${BOLD}${RED}"
+            ;;
+        "none" )
+            TITLES="${BOLD}"
+            TEXT="${NORMAL}"
+            NUMS="${BOLD}"
+            HELP_TXT="${NORMAL}"
+            EXIT_TXT="${BOLD}"
+            ;;
+        *)
+            TITLES="${BOLD}${CYAN}"
+            TEXT="${NORMAL}${WHITE}"
+            NUMS="${NORMAL}${BOLD}${WHITE}"
+            HELP_TXT="${NORMAL}${CYAN}"
+            EXIT_TXT="${BOLD}${CYAN}"
+            ;;
+    esac
 
     printf %b "\\n${TITLES} Generate:${NORMAL}\\n"
     printf %b "${NUMS}    1)${TEXT} Contribution stats (by author)\\n"

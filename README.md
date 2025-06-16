@@ -212,10 +212,13 @@ export _GIT_IGNORE_AUTHORS="(author@examle.com|username)"
 
 ### Color themes
 
-You can change to the legacy color scheme by toggling the variable `_MENU_THEME` between `default` and `legacy`
+You can change to the legacy color scheme by toggling the variable `_MENU_THEME` between `default` and `legacy`.
+You can completely disable the color theme by setting the `_MENU_THEME` variable to `none`.
 
 ```bash
 export _MENU_THEME="legacy"
+# or
+export _MENU_THEME="none"
 ```
 
 ![legacyThemeScreenshot](https://github.com/user-attachments/assets/3b319c1a-827f-47b8-bbfa-b8b59a39deef)

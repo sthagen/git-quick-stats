@@ -92,14 +92,15 @@ ADDITIONAL USAGE
         ex: export _GIT_MERGE_VIEW=enable
     You can also set _GIT_MERGE_VIEW to only show merge commits
         ex: export _GIT_MERGE_VIEW=exclusive
-    You can set _MENU_THEME to display the legacy color scheme
+    You can change to the legacy color scheme by toggling the variable \"_MENU_THEME\" between \"default\" and \"legacy\".
+    You can completely disable the color theme by setting the \"_MENU_THEME\" variable to \"none\".
         ex: export _MENU_THEME=legacy
     You can set _GIT_BRANCH to set the branch of the stats
         ex: export _GIT_BRANCH=master
     You can set _GIT_IGNORE_AUTHORS to filter out specific authors
         ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\"
-    You can sort contribution stats by field name, commits, insertions, deletions, or lines - total lines changed and order - asc, desc
-        ex: export _GIT_SORT_BY=name-asc"
+    You can sort contribution stats by field \"name\", \"commits\", \"insertions\", \"deletions\", or \"lines\" - total lines changed and order - \"asc\", \"desc\"
+        ex: export _GIT_SORT_BY=\"name-asc\""
 
 assert_raises "$src fail" 1
 

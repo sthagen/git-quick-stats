@@ -6,7 +6,8 @@
 >
 > Any git repository may contain tons of information about commits, contributors, and files. Extracting this information is not always trivial, mostly because there are a gadzillion options to a gadzillion git commands - I don't think there is a single person alive who knows them all. Probably not even [Linus Torvalds](https://github.com/torvalds) himself :).
 
-![mainMenuScreenshot](https://github.com/user-attachments/assets/05a20ff1-44f6-4e44-9d62-c2c089f9ff4e)
+![mainImageScreenshot](https://github.com/user-attachments/assets/7d8637a4-5a67-49f6-8724-ca7548b987c6)
+
 
 ## Table of Contents
 
@@ -54,9 +55,12 @@
 
 ## Screenshots
 
-![commitsByWeekdayScreenshot](https://github.com/user-attachments/assets/3a55f3ac-8801-4bbf-9b3a-92b53a64631e)
+![commitsByWeekdayScreenshot](https://github.com/user-attachments/assets/3496d245-6385-47d1-878a-726e79100eb1)
 
-![commitsByHourScreenshot](https://github.com/user-attachments/assets/d7de5280-8bb9-4391-9c6c-7e688f2df171)
+![commitsByHourScreenshot](https://github.com/user-attachments/assets/9f1d69d9-46e0-411d-a5ed-905ffdfb887a)
+
+![commitActivityScreenshot](https://github.com/user-attachments/assets/693fff31-65c7-4b9f-a011-6114a2d10a26)
+
 
 ## Usage
 
@@ -204,18 +208,31 @@ You can set the variable `_GIT_BRANCH` to set the branch of the stats. Works wit
 export _GIT_BRANCH="master"
 ```
 
+### Ignore authors
+
 You can set the variable `_GIT_IGNORE_AUTHORS` to filter out specific authors. It will affect the "All contributors", ""Suggested code reviewers" and "New contributors" options.
 
 ```bash
 export _GIT_IGNORE_AUTHORS="(author@examle.com|username)"
 ```
 
+### Sorting contribution stats
+
+You can sort contribution stats by field `name`, `commits`, `insertions`, `deletions`, or `lines` (total lines changed) and order (`asc`, `desc`). e.g.: `commits-desc`
+
+```bash
+export _GIT_SORT_BY="name-asc"
+```
+
 ### Color themes
 
-You can change to the legacy color scheme by toggling the variable `_MENU_THEME` between `default` and `legacy`
+You can change to the legacy color scheme by toggling the variable `_MENU_THEME` between `default` and `legacy`.
+You can completely disable the color theme by setting the `_MENU_THEME` variable to `none`.
 
 ```bash
 export _MENU_THEME="legacy"
+# or
+export _MENU_THEME="none"
 ```
 
 ![legacyThemeScreenshot](https://github.com/user-attachments/assets/3b319c1a-827f-47b8-bbfa-b8b59a39deef)

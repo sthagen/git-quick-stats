@@ -11,7 +11,7 @@
 . tests/assert.sh -v
 
 src="./git-quick-stats"
-assert "$src fail" "Invalid argument
+assert "$src fail" "Invalid argument: fail
 
 NAME
     git-quick-stats - Simple and efficient way to access various stats in a git repo
@@ -24,7 +24,7 @@ DESCRIPTION
     Any git repository contains tons of information about commits, contributors,
     and files. Extracting this information is not always trivial, mostly because
     of a gadzillion options to a gadzillion git commands.
-
+    
     This program allows you to see detailed information about a git repository.
 
 GENERATE OPTIONS
@@ -92,19 +92,22 @@ ADDITIONAL USAGE
         ex: export _GIT_MERGE_VIEW=enable
     You can also set _GIT_MERGE_VIEW to only show merge commits
         ex: export _GIT_MERGE_VIEW=exclusive
-    You can set _MENU_THEME to display the legacy color scheme
+    You can change to the legacy color scheme by toggling the variable \"_MENU_THEME\" between \"default\" and \"legacy\".
+    You can completely disable the color theme by setting the \"_MENU_THEME\" variable to \"none\".
         ex: export _MENU_THEME=legacy
     You can set _GIT_BRANCH to set the branch of the stats
         ex: export _GIT_BRANCH=master
     You can set _GIT_IGNORE_AUTHORS to filter out specific authors
-        ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\""
+        ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\"
+    You can sort contribution stats by field \"name\", \"commits\", \"insertions\", \"deletions\", or \"lines\" - total lines changed and order - \"asc\", \"desc\"
+        ex: export _GIT_SORT_BY=\"name-asc\""
 
 assert_raises "$src fail" 1
 
 assert_contains "$src --suggest-reviewers" "Suggested code reviewers (based on git history)"
 assert_success "$src --suggest-reviewers"
 
-assert_contains "$src --detailed-git-stats" "Contribution stats"
+assert_contains "$src --detailed-git-stats" "Contribution stats (by author) on the current branch"
 assert_success "$src --detailed-git-stats"
 
 assert_contains "$src --commits-per-day" "Git commits per date"

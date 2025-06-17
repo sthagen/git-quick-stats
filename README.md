@@ -6,7 +6,8 @@
 >
 > Any git repository may contain tons of information about commits, contributors, and files. Extracting this information is not always trivial, mostly because there are a gadzillion options to a gadzillion git commands - I don't think there is a single person alive who knows them all. Probably not even [Linus Torvalds](https://github.com/torvalds) himself :).
 
-![mainMenuScreenshot](https://github.com/user-attachments/assets/05a20ff1-44f6-4e44-9d62-c2c089f9ff4e)
+![mainImageScreenshot](https://github.com/user-attachments/assets/7d8637a4-5a67-49f6-8724-ca7548b987c6)
+
 
 ## Table of Contents
 
@@ -54,9 +55,12 @@
 
 ## Screenshots
 
-![commitsByWeekdayScreenshot](https://github.com/user-attachments/assets/3a55f3ac-8801-4bbf-9b3a-92b53a64631e)
+![commitsByWeekdayScreenshot](https://github.com/user-attachments/assets/3496d245-6385-47d1-878a-726e79100eb1)
 
-![commitsByHourScreenshot](https://github.com/user-attachments/assets/d7de5280-8bb9-4391-9c6c-7e688f2df171)
+![commitsByHourScreenshot](https://github.com/user-attachments/assets/9f1d69d9-46e0-411d-a5ed-905ffdfb887a)
+
+![commitActivityScreenshot](https://github.com/user-attachments/assets/693fff31-65c7-4b9f-a011-6114a2d10a26)
+
 
 ## Usage
 

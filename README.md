@@ -204,10 +204,20 @@ You can set the variable `_GIT_BRANCH` to set the branch of the stats. Works wit
 export _GIT_BRANCH="master"
 ```
 
+### Ignore authors
+
 You can set the variable `_GIT_IGNORE_AUTHORS` to filter out specific authors. It will affect the "All contributors", ""Suggested code reviewers" and "New contributors" options.
 
 ```bash
 export _GIT_IGNORE_AUTHORS="(author@examle.com|username)"
+```
+
+### Sorting contribution stats
+
+You can sort contribution stats by field `name`, `commits`, `insertions`, `deletions`, or `lines` (total lines changed) and order (`asc`, `desc`). e.g.: `commits-desc`
+
+```bash
+export _GIT_SORT_BY="name-asc"
 ```
 
 ### Color themes

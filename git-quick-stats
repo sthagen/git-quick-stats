@@ -76,6 +76,14 @@ else
     _ignore_authors=""
 fi
 
+# Sort by field and order for contribution stats
+_GIT_SORT_BY=${_GIT_SORT_BY:-name-asc}
+# If the user has not set a sort order, default to name-asc
+if [[ ! "$_GIT_SORT_BY" =~ ^(name|commits|insertions|deletions|lines)-(asc|desc)$ ]]; then
+    echo "Invalid sort option: $_GIT_SORT_BY. Defaulting to 'name-asc'."
+    _GIT_SORT_BY="name-asc"
+fi
+
 # Default menu theme
 # Set the legacy theme by typing "export _MENU_THEME=legacy"
 _theme="${_MENU_THEME:=default}"
@@ -96,36 +104,39 @@ function commitsCalendarByAuthor() {
         --date=iso --author="$author" "$_since" "$_until" $_log_options \
         --pretty='%ad' $_pathspec | awk '
         {
-            split($0, a, " ");
+            split($0, a, " "); 
             # a[1] = YYYY-MM-DD
-            split(a[1], date_fields, "-");
+            split(a[1], date_fields, "-"); 
             mon = date_fields[2] + 0;
             cmd = "date -d \"" a[1] "\" +%u";
             cmd | getline weekday;
-            close(cmd);
+            close(cmd); 
             # weekday: 1=Mon, ..., 7=Sun
-            count[weekday][mon]++;
+            count[weekday][mon]++; 
         }
         END {
             # Output matrix
             for (d=1; d<=7; d++) {
-                if (d==1) printf "Mon   ";
+                if (d==1) printf "Mon   "; 
                 else if (d==2) printf "Tue   ";
-                else if (d==3) printf "Wed   ";
+                else if (d==3) printf "Wed   "; 
                 else if (d==4) printf "Thu   ";
-                else if (d==5) printf "Fri   ";
+                else if (d==5) printf "Fri   "; 
                 else if (d==6) printf "Sat   ";
-                else if (d==7) printf "Sun   ";
+                else if (d==7) printf "Sun   "; 
                 for (m=1; m<=12; m++) {
-                    c = count[d][m]+0;
-                    if (c==0)       out="...";
-                    else if (c<=9)  out="░░░";
-                    else if (c<=19)  out="▒▒▒";
-                    else            out="▓▓▓";
-                    printf "%s%s", out, (m<12?" ":"\n");
-                }
+                    c = count[d][m]+0; 
+                    if (c==0) 
+                        out="...";
+                    else if (c<=9)  
+                        out="░░░";
+                    else if (c<=19)  
+                        out="▒▒▒"; 
+                    else            
+                        out="▓▓▓";
+                    printf "%s%s", out, (m<12?" ":"\n"); }
             }
-            printf "\nLegend: ... = 0   ░░░ = 1–9   ▒▒▒ = 10–19   ▓▓▓ = 20+ commits\n";
+            printf "\nLegend: ... = 0   ░░░ = 1–9   ▒▒▒ = 10–19   ▓▓▓ = 20+ commits\n"; 
         }
     '
 }
@@ -196,7 +207,7 @@ DESCRIPTION
     Any git repository contains tons of information about commits, contributors,
     and files. Extracting this information is not always trivial, mostly because
     of a gadzillion options to a gadzillion git commands.
-
+    
     This program allows you to see detailed information about a git repository.
 
 GENERATE OPTIONS
@@ -270,7 +281,9 @@ ADDITIONAL USAGE
     You can set _GIT_BRANCH to set the branch of the stats
         ex: export _GIT_BRANCH=master
     You can set _GIT_IGNORE_AUTHORS to filter out specific authors
-        ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\""
+        ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\"
+    You can sort contribution stats by field \"name\", \"commits\", \"insertions\", \"deletions\", or \"lines\" - total lines changed and order - \"asc\", \"desc\"
+        ex: export _GIT_SORT_BY=\"name-asc\""
 }
 
 ################################################################################
@@ -362,7 +375,7 @@ filter_ignored_authors() {
 
 ################################################################################
 # DESC: Shows detailed contribution stats per author by parsing every commit in
-#       the repo and outputting their contribution stats
+#       the repo and outputting their contribution stats.
 # ARGS: $branch (optional): Users can specify an alternative branch instead of
 #                           the current default one
 # OUTS: None
@@ -394,82 +407,151 @@ function detailedGitStats() {
         optionPicked "Contribution stats (by author) on the current branch:"
     fi
 
+    local sort_by="${_GIT_SORT_BY:-name-asc}"
+    local sort_field
+    local sort_order
+    local sort_command
+
+    sort_field=$(echo "$sort_by" | awk -F- '{print $1}')
+    sort_order=$(echo "$sort_by" | awk -F- '{print $2}')
+
+    local sort_key
+    case "$sort_field" in
+        name)       sort_key=1 ;;
+        commits)    sort_key=2 ;;
+        insertions) sort_key=3 ;;
+        deletions)  sort_key=4 ;;
+        lines)      sort_key=5 ;;
+        *)
+            echo "Invalid sort field: $sort_field. Defaulting to 'name'."
+            sort_key=1
+            ;;
+    esac
+
+    echo -e "Sorting by: $sort_field ($sort_order)\n"
+
+    local sort_flags="-t'|' -k${sort_key},${sort_key}"
+    if [[ "$sort_field" != "name" ]]; then
+        sort_flags="${sort_flags}n"
+    fi
+    if [[ "$sort_order" == "desc" ]]; then
+        sort_flags="${sort_flags}r"
+    fi
+    sort_command="sort ${sort_flags}"
+
+    # 1. git log -> awk (extract data) -> sort -> awk (format output with graphs)
     git -c log.showSignature=false log ${_branch} --use-mailmap $_merges --numstat \
         --pretty="format:commit %H%nAuthor: %aN <%aE>%nDate:   %ad%n%n%w(0,4,4)%B%n" \
-        "$_since" "$_until" $_log_options $_pathspec | LC_ALL=C awk '
-        function printStats(author) {
-        printf "\t%s:\n", author
-
-        if(more["total"] > 0) {
-            printf "\t  insertions:    %d\t(%.0f%%)\n", more[author], \
-                (more[author] / more["total"] * 100)
-        } else {
-            printf "\t  insertions:    %d\t(%.0f%%)\n", 0, 0
-        }
-
-        if(less["total"] > 0) {
-            printf "\t  deletions:     %d\t(%.0f%%)\n", less[author], \
-                (less[author] / less["total"] * 100)
-        } else {
-            printf "\t  deletions:     %d\t(%.0f%%)\n", 0, 0
-        }
-
-        if(file["total"] > 0) {
-            printf "\t  files:         %d\t(%.0f%%)\n", file[author], \
-                (file[author] / file["total"] * 100)
-        }
-
-        if(commits["total"] > 0) {
-            printf "\t  commits:       %d\t(%.0f%%)\n", commits[author], \
-                (commits[author] / commits["total"] * 100)
-        }
-
-        if (first[author] != "") {
-            if ( ((more["total"] + less["total"]) * 100) > 0) {
-                printf "\t  lines changed: %d\t", more[author] + less[author]
-                printf "(%.0f%%)\n", ((more[author] + less[author]) / \
-                                      (more["total"] + less["total"]) * 100)
-            }
-            else {
-                printf "\t  lines changed: %d\t(0%%)\n", (more[author] + less[author])
-            }
-            printf "\t  first commit:  %s\n", first[author]
-            printf "\t  last commit:   %s\n", last[author]
-        }
-
-        printf "\n"
-        }
-
+        "$_since" "$_until" $_log_options $_pathspec |
+    LC_ALL=C awk '
+        # This first awk script extracts raw data into a delimited format
         /^Author:/ {
-        $1 = ""
-        author = $0
-        commits[author] += 1
-        commits["total"] += 1
+            $1 = ""; author = $0;
+            commits[author] += 1;
         }
-
         /^Date:/ {
-        $1="";
-        first[author] = substr($0, 2)
-        if(last[author] == "" ) { last[author] = first[author] }
+            $1=""; current_date = substr($0, 2);
+            if (last[author] == "") { last[author] = current_date; }
+            first[author] = current_date;
         }
-
         /^[0-9]/ {
-        more[author] += $1
-        less[author] += $2
-
-        file[author] += 1
-        more["total"]  += $1
-        less["total"]  += $2
-        file["total"]  += 1
+            more[author] += $1;
+            less[author] += $2;
+            file[author] += 1;
         }
-
         END {
-        for (author in commits) {
-            if (author != "total") {
-            printStats(author)
+            for (author in commits) {
+                lines_changed = more[author] + less[author];
+                printf "%s|%d|%d|%d|%d|%d|%s|%s\n",
+                    author, commits[author]+0, more[author]+0, less[author]+0,
+                    lines_changed, file[author]+0, first[author], last[author];
             }
+        }' |
+    eval "$sort_command" | filter_ignored_authors | 
+    LC_ALL=C awk '
+        # This second awk script stores data, calculates totals, and then formats output with graphs
+        BEGIN {
+            FS = "|";
+            total_commits = 0; total_insertions = 0; total_deletions = 0;
+            total_lines = 0; total_files = 0;
+            num_authors = 0; # Counter for stored authors
         }
-        printStats("total")
+        {
+            # Store all data for a second pass after totals are known
+            authors[num_authors] = $1;
+            commits_arr[num_authors] = $2;
+            insertions_arr[num_authors] = $3;
+            deletions_arr[num_authors] = $4;
+            lines_changed_arr[num_authors] = $5;
+            files_arr[num_authors] = $6;
+            first_commit_arr[num_authors] = $7;
+            last_commit_arr[num_authors] = $8;
+
+            # Accumulate overall totals
+            total_commits += $2;
+            total_insertions += $3;
+            total_deletions += $4;
+            total_lines += $5;
+            total_files += $6;
+            num_authors++;
+        }
+        END {
+            for (j = 0; j < num_authors; j++) {
+                author = authors[j];
+                current_commits = commits_arr[j];
+                current_insertions = insertions_arr[j];
+                current_deletions = deletions_arr[j];
+                current_lines_changed = lines_changed_arr[j];
+                current_files = files_arr[j];
+                current_first_commit = first_commit_arr[j];
+                current_last_commit = last_commit_arr[j];
+
+                printf "\t%s:\n", author;
+
+                # Commits graph
+                if (total_commits > 0) {
+                    commit_percent = (current_commits * 100.0) / total_commits;
+                    printf "\t  commits:       %d (%.1f%%)\n", current_commits, commit_percent;
+                } else {
+                    printf "\t  commits:       %d\n", current_commits;
+                }
+
+                # Insertions graph
+                if (total_insertions > 0) {
+                    insert_percent = (current_insertions * 100.0) / total_insertions;
+                    printf "\t  insertions:    %d (%.1f%%)\n", current_insertions, insert_percent;
+                } else {
+                    printf "\t  insertions:    %d\n", current_insertions;
+                }
+
+                # Deletions graph
+                if (total_deletions > 0) {
+                    delete_percent = (current_deletions * 100.0) / total_deletions;
+                    printf "\t  deletions:     %d (%.1f%%)\n", current_deletions, delete_percent;
+                } else {
+                    printf "\t  deletions:     %d\n", current_deletions;
+                }
+
+                # Lines changed graph
+                if (total_lines > 0) {
+                    lines_percent = (current_lines_changed * 100.0) / total_lines;
+                    printf "\t  lines changed: %d (%.1f%%)\n", current_lines_changed, lines_percent;
+                } else {
+                    printf "\t  lines changed: %d\n", current_lines_changed;
+                }
+
+                printf "\t  files:         %d\n", current_files;
+                printf "\t  first commit:  %s\n", current_first_commit;
+                printf "\t  last commit:   %s\n\n", current_last_commit;
+            }
+
+            # Print overall totals
+            printf "\t%s:\n", " total";
+            printf "\t  commits:       %d\n", total_commits;
+            printf "\t  insertions:    %d\n", total_insertions;
+            printf "\t  deletions:     %d\n", total_deletions;
+            printf "\t  lines changed: %d\n", total_lines;
+            printf "\t  files:         %d\n\n", total_files;
         }'
 }
 
@@ -554,9 +636,10 @@ function csvOutput() {
     local _branch=""
 
     # Check if requesting for a specific branch
-    if [[ -n "${branch}" ]]; then
+    if [[ -n "${branch}" ]];  then
         # Check if branch exist
-        if [[ $(git show-ref refs/heads/"${branch}") ]] ; then
+        if [[ $(git show-ref refs/heads/"${branch}") ]] ;
+        then
             is_branch_existing=true
             _branch="${branch}"
         else
@@ -671,7 +754,7 @@ function toJsonProp() {
         # add in hold buffer and loop while the string is not finished.
         /^'"$propTag"',?\r?$/ ! { H; n; b eos; }
         # end of the string, flip buffer to current pattern.
-		# keeps the comma if any, or a space as an empty placeholder.
+        # keeps the comma if any, or a space as an empty placeholder.
 		/,\r?$/ ! { x; s/\r?$/ / }
 		/,\r?$/   { x; s/\r?$/,/ }
     }
@@ -891,7 +974,8 @@ function commitsByYear() {
     
     echo -e "\tyear\tsum"
     # Add time strings to make these a touch more robust
-    for year in $(seq "$startYear" "$endYear"); do
+    for year in $(seq "$startYear" "$endYear");
+    do
         if [[ "$year" = "$startYear" ]]; then
             __since=$_since
             __until="--until=$year-12-31 23:59:59"
@@ -918,13 +1002,12 @@ function commitsByYear() {
     }
     END{
         for (year in count) {
-            s="|";
+            s="|"; 
             if (total > 0) {
-                percent = ((count[year] / total) * 100) / 1.25;
-                for (i = 1; i <= percent; ++i) {
+                percent = ((count[year] / total) * 100) / 1.25; for (i = 1; i <= percent; ++i) {
                     s=s"█"
                 }
-                printf( "\t%s\t%-0s\t%s\n", year, count[year], s );
+                printf( "\t%s\t%-0s\t%s\n", year, count[year], s ); 
             }
         }
     }' | sort
@@ -951,13 +1034,12 @@ function commitsByMonth() {
     }
     END{
         for (month in count) {
-            s="|";
+            s="|"; 
             if (total > 0) {
-                percent = ((count[month] / total) * 100) / 1.25;
-                for (i = 1; i <= percent; ++i) {
+                percent = ((count[month] / total) * 100) / 1.25; for (i = 1; i <= percent; ++i) {
                     s=s"█"
                 }
-                printf( "\t%s\t%-0s\t%s\n", month, count[month], s );
+                printf( "\t%s\t%-0s\t%s\n", month, count[month], s ); 
             }
         }
     }' | LC_TIME="en_EN.UTF-8" sort -M
@@ -986,25 +1068,22 @@ function commitsByWeekday() {
     do
         echo -en "\t$counter\t$i\t"
         git -c log.showSignature=false shortlog -n $_merges --format='%ad %s' \
-            "${_author}" "$_since" "$_until" $_log_options |
-            grep -cE "^ * $i \w\w\w [0-9]{1,2} " || continue
+            "${_author}" "$_since" "$_until" $_log_options | grep -cE "^ * $i \w\w\w [0-9]{1,2} " || continue
         counter=$((counter+1))
     done | awk '{
     }
     NR == FNR {
-        count[$1" "$2] = $3;
-        total += $3;
+        count[$1" "$2] = $3; total += $3;
         next
     }
     END{
         for (day in count) {
-            s="|";
-            if (total > 0) {
-                percent = ((count[day] / total) * 100) / 1.25;
+            s="|"; if (total > 0) {
+                percent = ((count[day] / total) * 100) / 1.25; 
                 for (i = 1; i <= percent; ++i) {
                     s=s"█"
                 }
-                printf("\t%s\t%s\t%-0s\t%s\n", substr(day,0,1), substr(day,3,5), count[day], s);
+                printf("\t%s\t%s\t%-0s\t%s\n", substr(day,0,1), substr(day,3,5), count[day], s); 
             }
         }
     }' | sort -k 1 -n | awk '{$1=""}1' | awk '{$1=$1}1' \
@@ -1034,21 +1113,19 @@ function commitsByHour() {
     do
         echo -ne "\t$i\t"
         git -c log.showSignature=false shortlog -n $_merges --format='%ad %s' \
-            "${_author}" "$_since" "$_until" $_log_options |
-            grep -cE '[0-9] '$i':[0-9]' || continue
+            "${_author}" "$_since" "$_until" $_log_options | grep -cE '[0-9] '$i':[0-9]' || continue
     done | awk '{
         count[$1] = $2
         total += $2
     }
     END{
         for (hour in count) {
-            s="|";
+            s="|"; 
             if (total > 0) {
-                percent = ((count[hour] / total) * 100) / 1.25;
-                for (i = 1; i <= percent; ++i) {
+                percent = ((count[hour] / total) * 100) / 1.25; for (i = 1; i <= percent; ++i) {
                     s=s"█"
                 }
-                printf( "\t%s\t%-0s\t%s\n", hour, count[hour], s );
+                printf( "\t%s\t%-0s\t%s\n", hour, count[hour], s ); 
             }
         }
     }' | sort
@@ -1111,7 +1188,8 @@ if ! git rev-parse --is-inside-work-tree > /dev/null; then
     exit 1
 fi
 
-# Parse non-interative commands
+
+# Parse non-interactive commands
 if [[ "$#" -eq 1 ]]; then
     case "$1" in
         # GENERATE OPTIONS
@@ -1207,95 +1285,97 @@ if [[ "$#" -eq 1 ]]; then
         # SUGGEST OPTIONS
         -r|--suggest-reviewers) suggestReviewers;;
         -h|-\?|--help) usage;;
-        *) echo "Invalid argument"; usage; exit 1;;
+        *) echo "Invalid argument: $1"; usage; exit 1;;
     esac
     exit 0;
 fi
 [[ "$#" -gt 1 ]] && { echo "Invalid arguments"; usage; exit 1; }
 
-# Parse interactive commands
-clear
-showMenu
-
-while [[ "${opt}" != "" ]]; do
+# If no args, run interactive mode
+if [[ "$#" -eq 0 ]]; then
+    # Parse interactive commands
     clear
-    case "${opt}" in
-        1) detailedGitStats; showMenu;;
-        2) branch=""
-           while [[ -z "${branch}" ]]; do
-               read -r -p "Which branch? " branch
-           done
-           detailedGitStats "${branch}"; showMenu;;
-        3) changelogs; showMenu;;
-        4) author=""
-           while [[ -z "${author}" ]]; do
-               read -r -p "Which author? " author
-           done
-           changelogs "${author}"; showMenu;;
-        5) myDailyStats; showMenu;;
-        6) branch=""
-           while [[ -z "${branch}" ]]; do
-               read -r -p "Which branch? " branch
-           done
-           csvOutput "${branch}"; showMenu;;
-        7) json_path=""
-           while [[ -z "${json_path}" ]]; do
-               echo "NOTE: This feature is in beta!"
-               echo "The file name will be saved as \"output.json\"."
-               echo "The full path must be provided."
-               echo "Variables, subshell commands, or shorthands such as ~ may not be valid."
-               echo "You do not need the final slash at the end of a directory path."
-               echo "You must have write permission to the folder you are trying to save this to."
-               echo "This feature only works interactively and cannot be combined with other options."
-               echo -e "Example of a valid path: /home/$(whoami)\n"
-               read -r -p "Please provide the full path to directory to save JSON file: " json_path
-               if [[ ! -w "${json_path}" ]]; then
-                   echo "Invalid path or permission denied to write to given area."
-                   json_path=""
-               fi
-           done
-           jsonOutput "${json_path}"; showMenu;;
-        8) branchTree; showMenu;;
-        9) branchesByDate; showMenu;;
-       10) contributors; showMenu;;
-       11) newDate=""
-           while [[ -z "${newDate}" ]]; do
-               read -r -p "Since what date? (e.g. '2023-04-13', '13 April 2023', 'last Thursday') " newDate
-               # Test if the date provide is valid and try again if it isn't.
-               if ! date -d "${newDate}" +%s > /dev/null 2>&1; then
-                  newDate=""
-               fi
-           done
-           newContributors "${newDate}"; showMenu;;
-       12) commitsPerAuthor; showMenu;;
-       13) commitsPerDay; showMenu;;
-       14) commitsByMonth; showMenu;;
-       15) commitsByYear; showMenu;;
-       16) commitsByWeekday; showMenu;;
-       17) author=""
-           while [[ -z "${author}" ]]; do
-               read -r -p "Which author? " author
-           done
-           commitsByWeekday "${author}"; showMenu;;
-       18) commitsByHour; showMenu;;
-       19) author=""
-           while [[ -z "${author}" ]]; do
-               read -r -p "Which author? " author
-           done
-           commitsByHour "${author}"; showMenu;;
-       20) commitsByTimezone; showMenu;;
-       21) author=""
-           while [[ -z "${author}" ]]; do
-               read -r -p "Which author? " author
-           done
-           commitsByTimezone "${author}"; showMenu;;
-       22) suggestReviewers; showMenu;;
-       23) author=""
-            while [[ -z "${author}" ]]; do
-                read -r -p "Which author? " author
-            done
-            commitsCalendarByAuthor "${author}"; showMenu;;
-       q|"\n") exit;;
-       *) clear; optionPicked "Pick an option from the menu"; showMenu;;
-    esac
-done
+    showMenu
+
+    while [[ "${opt}" != "" ]]; do
+        clear
+        case "${opt}" in
+            1) detailedGitStats; showMenu;;
+            2) branch=""
+               while [[ -z "${branch}" ]]; do
+                   read -r -p "Which branch? " branch
+               done
+               detailedGitStats "${branch}"; showMenu;;
+            3) changelogs; showMenu;;
+            4) author=""
+               while [[ -z "${author}" ]]; do
+                   read -r -p "Which author? " author
+               done
+               changelogs "${author}"; showMenu;;
+            5) myDailyStats; showMenu;;
+            6) branch=""
+               while [[ -z "${branch}" ]]; do
+                   read -r -p "Which branch? " branch
+               done
+               csvOutput "${branch}"; showMenu;;
+            7) json_path=""
+               while [[ -z "${json_path}" ]]; do
+                   echo "NOTE: This feature is in beta!"
+                   echo "The file name will be saved as \"output.json\"."
+                   echo "The full path must be provided."
+                   echo "Variables, subshell commands, or shorthands such as ~ may not be valid."
+                   echo "You do not need the final slash at the end of a directory path."
+                   echo "You must have write permission to the folder you are trying to save this to."
+                   echo "This feature only works interactively and cannot be combined with other options."
+                   echo -e "Example of a valid path: /home/$(whoami)\n"
+                   read -r -p "Please provide the full path to directory to save JSON file: " json_path
+                   if [[ ! -w "${json_path}" ]]; then
+                       echo "Invalid path or permission denied to write to given area."
+                       json_path=""
+                   fi
+               done
+               jsonOutput "${json_path}"; showMenu;;
+            8) branchTree; showMenu;;
+            9) branchesByDate; showMenu;;
+           10) contributors; showMenu;;
+           11) newDate=""
+               while [[ -z "${newDate}" ]]; do
+                   read -r -p "Since what date? (e.g. '2023-04-13', '13 April 2023', 'last Thursday') " newDate
+                   if ! date -d "${newDate}" +%s > /dev/null 2>&1; then
+                      newDate=""
+                   fi
+               done
+               newContributors "${newDate}"; showMenu;;
+           12) commitsPerAuthor; showMenu;;
+           13) commitsPerDay; showMenu;;
+           14) commitsByMonth; showMenu;;
+           15) commitsByYear; showMenu;;
+           16) commitsByWeekday; showMenu;;
+           17) author=""
+               while [[ -z "${author}" ]]; do
+                   read -r -p "Which author? " author
+               done
+               commitsByWeekday "${author}"; showMenu;;
+           18) commitsByHour; showMenu;;
+           19) author=""
+               while [[ -z "${author}" ]]; do
+                   read -r -p "Which author? " author
+               done
+               commitsByHour "${author}"; showMenu;;
+           20) commitsByTimezone; showMenu;;
+           21) author=""
+               while [[ -z "${author}" ]]; do
+                   read -r -p "Which author? " author
+               done
+               commitsByTimezone "${author}"; showMenu;;
+           22) suggestReviewers; showMenu;;
+           23) author=""
+                while [[ -z "${author}" ]]; do
+                    read -r -p "Which author? " author
+                done
+                commitsCalendarByAuthor "${author}"; showMenu;;
+           q|"\n") exit;;
+           *) clear; optionPicked "Pick an option from the menu"; showMenu;;
+        esac
+    done
+fi

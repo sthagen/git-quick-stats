@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: Git Quick Stats
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name-particle: tomice
+  - name-particle: arzzen
+identifiers:
+  - type: url
+    value: "https://github.com/git-quick-stats"
+    description: >-
+      Simple and efficient way to access various statistics
+      in a git repository
+repository-code: "https://github.com/git-quick-stats/git-quick-stats"
+url: "https://git-quick-stats.sh/"
+abstract: >-
+  Git-quick-stats is a simple and efficient way to access
+  various statistics in a git repository.
+keywords:
+  - git
+  - stats
+license: MIT
+version: 2.6.2

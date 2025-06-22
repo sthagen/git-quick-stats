@@ -8,7 +8,6 @@
 
 ![mainImageScreenshot](https://github.com/user-attachments/assets/7d8637a4-5a67-49f6-8724-ca7548b987c6)
 
-
 ## Table of Contents
 
 [**Screenshots**](#screenshots)
@@ -60,7 +59,6 @@
 ![commitsByHourScreenshot](https://github.com/user-attachments/assets/9f1d69d9-46e0-411d-a5ed-905ffdfb887a)
 
 ![commitActivityScreenshot](https://github.com/user-attachments/assets/693fff31-65c7-4b9f-a011-6114a2d10a26)
-
 
 ## Usage
 
@@ -126,10 +124,10 @@ LIST OPTIONS
         displays a list of commits per author
     -d, --commits-per-day
         displays a list of commits per day
-    -Y, --commits-by-year
-        displays a list of commits per year
     -m, --commits-by-month
         displays a list of commits per month
+    -Y, --commits-by-year
+        displays a list of commits per year
     -w, --commits-by-weekday
         displays a list of commits per weekday
     -W, --commits-by-author-by-weekday
@@ -142,6 +140,12 @@ LIST OPTIONS
         displays a list of commits per timezone
     -Z, --commits-by-author-by-timezone
         displays a list of commits per timezone by author
+
+CALENDAR OPTIONS
+    -k, --commits-calendar-by-author
+        shows a calendar heatmap of commits per day-of-week per month for a given author
+    -H, --commits-heatmap
+        shows a heatmap of commits per day-of-week per month for the last 30 days
 
 SUGGEST OPTIONS
     -r, --suggest-reviewers
@@ -222,6 +226,14 @@ You can sort contribution stats by field `name`, `commits`, `insertions`, `delet
 
 ```bash
 export _GIT_SORT_BY="name-asc"
+```
+
+### Commit days
+
+You can set \_GIT_DAYS to set the number of days for the heatmap
+
+```bash
+export _GIT_DAYS=30
 ```
 
 ### Color themes

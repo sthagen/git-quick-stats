@@ -84,6 +84,14 @@ if [[ ! "$_GIT_SORT_BY" =~ ^(name|commits|insertions|deletions|lines)-(asc|desc)
     _GIT_SORT_BY="name-asc"
 fi
 
+# Number of days to display in the heatmap
+_commit_days=${_GIT_DAYS:-30}
+# If the user has not set a number of days, default to 30
+if ! [[ "$_commit_days" =~ ^[0-9]+$ ]] || (( _commit_days <= 0 )); then
+    echo "Invalid number of days: $_commit_days. Defaulting to 30."
+    _commit_days=30
+fi
+
 # Default menu theme
 # Set the legacy theme by typing "export _MENU_THEME=legacy"
 _theme="${_MENU_THEME:=default}"
@@ -139,6 +147,94 @@ function commitsCalendarByAuthor() {
             printf "\nLegend: ... = 0   ░░░ = 1–9   ▒▒▒ = 10–19   ▓▓▓ = 20+ commits\n"; 
         }
     '
+}
+
+# DESC: Shows a heatmap of commits per hour of each day for the last 30 days
+# ARGS: $author (required)
+function commitsHeatmap() {
+    # number of days to display
+    DAYS=$_commit_days 
+
+    optionPicked "Commit Heatmap for the last $DAYS days"
+
+    color_for_count() {
+        local n=$1
+        if (( n == 0 )); then
+            echo -e "\e[38;2;255;255;0m"        # (255,255,0)
+        elif (( n < 3 )); then
+            echo -e "\e[38;2;251;231;0m"        # (251,231,0)
+        elif (( n < 6 )); then
+            echo -e "\e[38;2;247;209;0m"        # (247,209,0)
+        elif (( n < 10 )); then
+            echo -e "\e[38;2;243;189;0m"        # (243,189,0)
+        elif (( n < 20 )); then
+            echo -e "\e[38;2;238;170;0m"        # (238,170,0)
+        elif (( n < 50 )); then
+            echo -e "\e[38;2;232;143;0m"        # (232,143,0)
+        elif (( n < 100 )); then
+            echo -e "\e[38;2;225;120;0m"        # (225,120,0)
+        elif (( n < 200 )); then
+            echo -e "\e[38;2;218;99;0m"         # (218,99,0)
+        else
+            echo -e "\e[38;2;211;81;0m"         # (211,81,0)
+        fi
+    }
+
+    printf "Day | Date-Hours |"
+    for h in {0..23}; do
+        printf " %2d" "$h"
+    done
+    echo
+    echo "------------------------------------------------------------------------------------------"
+
+    for i in $(seq $((DAYS-1)) -1 0); do
+        day=$(date -d "-$i days" +"%Y-%m-%d")
+        if [[ $(date -d "$day" +%u) -gt 5 ]]; then
+            printf "\e[1;30m"
+        else
+            printf "\e[0m"
+        fi
+
+        dayName=$(date -d "$day" +%a)
+        printf "%s | %s |" "$dayName" "$day"
+
+        declare -a commits_per_hour
+        for h in {0..23}; do
+            commits_per_hour[$h]=0
+        done
+
+        IFS=$'\n' commits_per_hour=($(
+            git log --since="$day 00:00" --until="$day 23:59" --pretty=format:"%ci" 2>/dev/null |
+            awk '{split($2, t, ":"); h = t[1]+0; c[h]++} END {for(i=0;i<24;i++) print c[i]+0}'
+        ))
+        unset IFS
+
+        for h in {0..23}; do
+            count=${commits_per_hour[$h]}
+            color=$(color_for_count "$count")
+            if (( count == 0 )); then
+                printf " \e[90m.\e[0m "
+            else
+                printf "%b █ \e[0m" "$color"
+            fi
+        done
+        echo 
+    done
+    echo "------------------------------------------------------------------------------------------"
+
+    # Color legend with colored first character
+    echo -e "\nLegend:"
+    echo -e " \e[38;2;255;255;0m█\e[0m 1-3 commits"
+    echo -e " \e[38;2;251;231;0m█\e[0m 4-6 commits"
+    echo -e " \e[38;2;247;209;0m█\e[0m 7-10 commits"
+    echo -e " \e[38;2;243;189;0m█\e[0m 11-20 commits"
+    echo -e " \e[38;2;238;170;0m█\e[0m 21-50 commits"
+    echo -e " \e[38;2;232;143;0m█\e[0m 51-100 commits"
+    echo -e " \e[38;2;225;120;0m█\e[0m 101-200 commits"
+    echo -e " \e[38;2;218;99;0m█\e[0m 201-500 commits"
+    echo -e " \e[38;2;211;81;0m█\e[0m 500+ commits"
+    echo -e " \e[90m.\e[0m  = no commits"
+    echo
 }
 
 ################################################################################
@@ -256,6 +352,12 @@ LIST OPTIONS
     -Z, --commits-by-author-by-timezone
         displays a list of commits per timezone by author
 
+CALENDAR OPTIONS
+    -k, --commits-calendar-by-author
+        shows a calendar heatmap of commits per day-of-week per month for a given author
+    -H, --commits-heatmap
+        shows a heatmap of commits per day-of-week per month for the last 30 days
+
 SUGGEST OPTIONS
     -r, --suggest-reviewers
         show the best people to contact to review code
@@ -283,7 +385,9 @@ ADDITIONAL USAGE
     You can set _GIT_IGNORE_AUTHORS to filter out specific authors
         ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\"
     You can sort contribution stats by field \"name\", \"commits\", \"insertions\", \"deletions\", or \"lines\" - total lines changed and order - \"asc\", \"desc\"
-        ex: export _GIT_SORT_BY=\"name-asc\""
+        ex: export _GIT_SORT_BY=\"name-asc\"
+    You can set _GIT_DAYS to set the number of days for the heatmap
+        ex: export _GIT_DAYS=30"
 }
 
 ################################################################################
@@ -357,6 +461,7 @@ function showMenu() {
     printf %b "${NUMS}   22)${TEXT} Code reviewers (based on git history)\\n"
     printf %b "\\n${TITLES} Calendar:\\n"
     printf %b "${NUMS}   23)${TEXT} Activity calendar by author\\n"
+    printf %b "${NUMS}   24)${TEXT} Activity heatmap for the last $_commit_days days\\n"
     printf %b "\\n${HELP_TXT}Please enter a menu option or ${EXIT_TXT}press Enter to exit.\\n"
     printf %b "${TEXT}> ${NORMAL}"
     read -r opt
@@ -1275,13 +1380,14 @@ if [[ "$#" -eq 1 ]]; then
                 read -r -p "Which author? " author
             done
             commitsByTimezone "${author}";;
-        # ACTIVITY OPTIONS
+        # CALENDAR OPTIONS
         -k|--commits-calendar-by-author)
             author="${_GIT_AUTHOR:-}"
             while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
             commitsCalendarByAuthor "${author}";;
+        -H|--commits-heatmap) commitsHeatmap;;
         # SUGGEST OPTIONS
         -r|--suggest-reviewers) suggestReviewers;;
         -h|-\?|--help) usage;;
@@ -1374,6 +1480,7 @@ if [[ "$#" -eq 0 ]]; then
                     read -r -p "Which author? " author
                 done
                 commitsCalendarByAuthor "${author}"; showMenu;;
+           24) commitsHeatmap; showMenu;;
            q|"\n") exit;;
            *) clear; optionPicked "Pick an option from the menu"; showMenu;;
         esac

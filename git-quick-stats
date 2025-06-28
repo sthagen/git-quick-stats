@@ -168,7 +168,6 @@ function commitsCalendarByAuthor() {
 }
 
 # DESC: Shows a heatmap of commits per hour of each day for the last 30 days
-# ARGS: $author (required)
 function commitsHeatmap() {
     optionPicked "Commit Heatmap for the last $_commit_days days"
 

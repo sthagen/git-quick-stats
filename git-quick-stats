@@ -10,6 +10,24 @@
 set -o nounset
 set -o errexit
 
+# Global color variables using tput setaf
+COLOR_NORMAL=$(tput sgr0)
+COLOR_CYANL=$(tput setaf 6)
+COLOR_BOLD=$(tput bold)
+COLOR_RED=$(tput setaf 1)
+COLOR_YELLOW=$(tput setaf 3)
+COLOR_WHITE=$(tput setaf 7)
+COLOR_BRIGHT_YELLOW=$(tput setaf 226)
+COLOR_GOLD=$(tput setaf 220)
+COLOR_ORANGE=$(tput setaf 214)
+COLOR_DARK_ORANGE=$(tput setaf 208)
+COLOR_RED_ORANGE=$(tput setaf 202)
+COLOR_DARK_RED=$(tput setaf 160)
+COLOR_DEEP_RED=$(tput setaf 88)
+COLOR_DARKEST_RED=$(tput setaf 52)
+COLOR_GRAY=$(tput setaf 240)
+COLOR_RESET=$(tput sgr0)
+
 # Beginning git log date. Respects all git datetime formats
 # If $_GIT_SINCE is never set, look at the repository to find the first date.
 # NOTE: previously this put the date at the fixed GIT epoch (May 2005)
@@ -152,53 +170,53 @@ function commitsCalendarByAuthor() {
 # DESC: Shows a heatmap of commits per hour of each day for the last 30 days
 # ARGS: $author (required)
 function commitsHeatmap() {
-    # number of days to display
-    DAYS=$_commit_days 
-
-    optionPicked "Commit Heatmap for the last $DAYS days"
+    optionPicked "Commit Heatmap for the last $_commit_days days"
 
     color_for_count() {
         local n=$1
         if (( n == 0 )); then
-            echo -e "\e[38;2;255;255;0m"        # (255,255,0)
+            echo -n "${COLOR_BRIGHT_YELLOW}"
+        elif (( n < 2 )); then
+            echo -n "${COLOR_GOLD}"
         elif (( n < 3 )); then
-            echo -e "\e[38;2;251;231;0m"        # (251,231,0)
+            echo -n "${COLOR_ORANGE}"
+        elif (( n < 4 )); then
+            echo -n "${COLOR_DARK_ORANGE}"
+        elif (( n < 5 )); then
+            echo -n "${COLOR_RED_ORANGE}"
         elif (( n < 6 )); then
-            echo -e "\e[38;2;247;209;0m"        # (247,209,0)
+            echo -n "${COLOR_RED}"
+        elif (( n < 8 )); then
+            echo -n "${COLOR_DARK_RED}"
         elif (( n < 10 )); then
-            echo -e "\e[38;2;243;189;0m"        # (243,189,0)
-        elif (( n < 20 )); then
-            echo -e "\e[38;2;238;170;0m"        # (238,170,0)
-        elif (( n < 50 )); then
-            echo -e "\e[38;2;232;143;0m"        # (232,143,0)
-        elif (( n < 100 )); then
-            echo -e "\e[38;2;225;120;0m"        # (225,120,0)
-        elif (( n < 200 )); then
-            echo -e "\e[38;2;218;99;0m"         # (218,99,0)
+            echo -n "${COLOR_DEEP_RED}"
         else
-            echo -e "\e[38;2;211;81;0m"         # (211,81,0)
+            echo -n "${COLOR_DARKEST_RED}"
         fi
     }
 
     printf "Day | Date-Hours |"
+    local h
     for h in {0..23}; do
         printf " %2d" "$h"
     done
     echo
     echo "------------------------------------------------------------------------------------------"
 
-    for i in $(seq $((DAYS-1)) -1 0); do
-        day=$(date -d "-$i days" +"%Y-%m-%d")
+    local i
+    for i in $(seq $((_commit_days-1)) -1 0); do
+        local day=$(date -d "-$i days" +"%Y-%m-%d")
         if [[ $(date -d "$day" +%u) -gt 5 ]]; then
             printf "\e[1;30m"
         else
             printf "\e[0m"
         fi
 
-        dayName=$(date -d "$day" +%a)
+        local dayName=$(date -d "$day" +%a)
         printf "%s | %s |" "$dayName" "$day"
 
         declare -a commits_per_hour
+        local h
         for h in {0..23}; do
             commits_per_hour[$h]=0
         done
@@ -209,9 +227,10 @@ function commitsHeatmap() {
         ))
         unset IFS
 
+        local h
         for h in {0..23}; do
-            count=${commits_per_hour[$h]}
-            color=$(color_for_count "$count")
+            local count=${commits_per_hour[$h]}
+            local color=$(color_for_count "$count")
             if (( count == 0 )); then
                 printf " \e[90m.\e[0m "
             else
@@ -222,18 +241,17 @@ function commitsHeatmap() {
     done
     echo "------------------------------------------------------------------------------------------"
 
-    # Color legend with colored first character
     echo -e "\nLegend:"
-    echo -e " \e[38;2;255;255;0m█\e[0m 1-3 commits"
-    echo -e " \e[38;2;251;231;0m█\e[0m 4-6 commits"
-    echo -e " \e[38;2;247;209;0m█\e[0m 7-10 commits"
-    echo -e " \e[38;2;243;189;0m█\e[0m 11-20 commits"
-    echo -e " \e[38;2;238;170;0m█\e[0m 21-50 commits"
-    echo -e " \e[38;2;232;143;0m█\e[0m 51-100 commits"
-    echo -e " \e[38;2;225;120;0m█\e[0m 101-200 commits"
-    echo -e " \e[38;2;218;99;0m█\e[0m 201-500 commits"
-    echo -e " \e[38;2;211;81;0m█\e[0m 500+ commits"
-    echo -e " \e[90m.\e[0m  = no commits"
+    echo -e " ${COLOR_BRIGHT_YELLOW}█${COLOR_RESET} 1 commit"
+    echo -e " ${COLOR_GOLD}█${COLOR_RESET} 2 commits"
+    echo -e " ${COLOR_ORANGE}█${COLOR_RESET} 3 commits"
+    echo -e " ${COLOR_DARK_ORANGE}█${COLOR_RESET} 4 commits"
+    echo -e " ${COLOR_RED_ORANGE}█${COLOR_RESET} 5 commits"
+    echo -e " ${COLOR_RED}█${COLOR_RESET} 6 commits"
+    echo -e " ${COLOR_DARK_RED}█${COLOR_RESET} 7–8 commits"
+    echo -e " ${COLOR_DEEP_RED}█${COLOR_RESET} 9–10 commits"
+    echo -e " ${COLOR_DARKEST_RED}█${COLOR_RESET} 11+ commits"
+    echo -e " ${COLOR_GRAY}.${COLOR_RESET} = no commits"
     echo
 }
 
@@ -397,12 +415,6 @@ ADDITIONAL USAGE
 ################################################################################
 function showMenu() {
     # These are "global" and can be overriden from users if so desired
-    NORMAL=$(tput sgr0)
-    CYAN=$(tput setaf 6)
-    BOLD=$(tput bold)
-    RED=$(tput setaf 1)
-    YELLOW=$(tput setaf 3)
-    WHITE=$(tput setaf 7)
     TITLES=""
     TEXT=""
     NUMS=""
@@ -412,29 +424,29 @@ function showMenu() {
     # Adjustable color menu option
     case "${_theme}"  in
         "legacy" )
-            TITLES="${BOLD}${RED}"
-            TEXT="${NORMAL}${CYAN}"
-            NUMS="${BOLD}${YELLOW}"
-            HELP_TXT="${NORMAL}${YELLOW}"
-            EXIT_TXT="${BOLD}${RED}"
+            TITLES="${COLOR_BOLD}${COLOR_RED}"
+            TEXT="${COLOR_NORMAL}${COLOR_CYANL}"
+            NUMS="${COLOR_BOLD}${COLOR_YELLOW}"
+            HELP_TXT="${COLOR_NORMAL}${COLOR_YELLOW}"
+            EXIT_TXT="${COLOR_BOLD}${COLOR_RED}"
             ;;
         "none" )
-            TITLES="${BOLD}"
-            TEXT="${NORMAL}"
-            NUMS="${BOLD}"
-            HELP_TXT="${NORMAL}"
-            EXIT_TXT="${BOLD}"
+            TITLES="${COLOR_BOLD}"
+            TEXT="${COLOR_NORMAL}"
+            NUMS="${COLOR_BOLD}"
+            HELP_TXT="${COLOR_NORMAL}"
+            EXIT_TXT="${COLOR_BOLD}"
             ;;
         *)
-            TITLES="${BOLD}${CYAN}"
-            TEXT="${NORMAL}${WHITE}"
-            NUMS="${NORMAL}${BOLD}${WHITE}"
-            HELP_TXT="${NORMAL}${CYAN}"
-            EXIT_TXT="${BOLD}${CYAN}"
+            TITLES="${COLOR_BOLD}${COLOR_CYANL}"
+            TEXT="${COLOR_NORMAL}${COLOR_WHITE}"
+            NUMS="${COLOR_NORMAL}${COLOR_BOLD}${COLOR_WHITE}"
+            HELP_TXT="${COLOR_NORMAL}${COLOR_CYANL}"
+            EXIT_TXT="${COLOR_BOLD}${COLOR_CYANL}"
             ;;
     esac
 
-    printf %b "\\n${TITLES} Generate:${NORMAL}\\n"
+    printf %b "\\n${TITLES} Generate:${COLOR_NORMAL}\\n"
     printf %b "${NUMS}    1)${TEXT} Contribution stats (by author)\\n"
     printf %b "${NUMS}    2)${TEXT} Contribution stats (by author) on a specific branch\\n"
     printf %b "${NUMS}    3)${TEXT} Git changelogs (last $_limit days)\\n"
@@ -463,7 +475,7 @@ function showMenu() {
     printf %b "${NUMS}   23)${TEXT} Activity calendar by author\\n"
     printf %b "${NUMS}   24)${TEXT} Activity heatmap for the last $_commit_days days\\n"
     printf %b "\\n${HELP_TXT}Please enter a menu option or ${EXIT_TXT}press Enter to exit.\\n"
-    printf %b "${TEXT}> ${NORMAL}"
+    printf %b "${TEXT}> ${COLOR_NORMAL}"
     read -r opt
 }
 

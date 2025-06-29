@@ -10,6 +10,24 @@
 set -o nounset
 set -o errexit
 
+# Global color variables using tput setaf
+COLOR_NORMAL=$(tput sgr0)
+COLOR_CYANL=$(tput setaf 6)
+COLOR_BOLD=$(tput bold)
+COLOR_RED=$(tput setaf 1)
+COLOR_YELLOW=$(tput setaf 3)
+COLOR_WHITE=$(tput setaf 7)
+COLOR_BRIGHT_YELLOW=$(tput setaf 226)
+COLOR_GOLD=$(tput setaf 220)
+COLOR_ORANGE=$(tput setaf 214)
+COLOR_DARK_ORANGE=$(tput setaf 208)
+COLOR_RED_ORANGE=$(tput setaf 202)
+COLOR_DARK_RED=$(tput setaf 160)
+COLOR_DEEP_RED=$(tput setaf 88)
+COLOR_DARKEST_RED=$(tput setaf 52)
+COLOR_GRAY=$(tput setaf 240)
+COLOR_RESET=$(tput sgr0)
+
 # Beginning git log date. Respects all git datetime formats
 # If $_GIT_SINCE is never set, look at the repository to find the first date.
 # NOTE: previously this put the date at the fixed GIT epoch (May 2005)
@@ -84,6 +102,14 @@ if [[ ! "$_GIT_SORT_BY" =~ ^(name|commits|insertions|deletions|lines)-(asc|desc)
     _GIT_SORT_BY="name-asc"
 fi
 
+# Number of days to display in the heatmap
+_commit_days=${_GIT_DAYS:-30}
+# If the user has not set a number of days, default to 30
+if ! [[ "$_commit_days" =~ ^[0-9]+$ ]] || (( _commit_days <= 0 )); then
+    echo "Invalid number of days: $_commit_days. Defaulting to 30."
+    _commit_days=30
+fi
+
 # Default menu theme
 # Set the legacy theme by typing "export _MENU_THEME=legacy"
 _theme="${_MENU_THEME:=default}"
@@ -139,6 +165,93 @@ function commitsCalendarByAuthor() {
             printf "\nLegend: ... = 0   ░░░ = 1–9   ▒▒▒ = 10–19   ▓▓▓ = 20+ commits\n"; 
         }
     '
+}
+
+# DESC: Shows a heatmap of commits per hour of each day for the last 30 days
+function commitsHeatmap() {
+    optionPicked "Commit Heatmap for the last $_commit_days days"
+
+    color_for_count() {
+        local n=$1
+        if (( n == 1 )); then
+            echo -n "${COLOR_BRIGHT_YELLOW}"
+        elif (( n < 2 )); then
+            echo -n "${COLOR_GOLD}"
+        elif (( n < 3 )); then
+            echo -n "${COLOR_ORANGE}"
+        elif (( n < 4 )); then
+            echo -n "${COLOR_DARK_ORANGE}"
+        elif (( n < 5 )); then
+            echo -n "${COLOR_RED_ORANGE}"
+        elif (( n < 6 )); then
+            echo -n "${COLOR_RED}"
+        elif (( n < 8 )); then
+            echo -n "${COLOR_DARK_RED}"
+        elif (( n < 10 )); then
+            echo -n "${COLOR_DEEP_RED}"
+        else
+            echo -n "${COLOR_DARKEST_RED}"
+        fi
+    }
+
+    printf "Day | Date/Hours |"
+    local h
+    for h in {0..23}; do
+        printf " %2d" "$h"
+    done
+    echo
+    echo "------------------------------------------------------------------------------------------"
+
+    local i
+    for i in $(seq $((_commit_days-1)) -1 0); do
+        local day=$(date -d "-$i days" +"%Y-%m-%d")
+        if [[ $(date -d "$day" +%u) -gt 5 ]]; then
+            echo -en "${COLOR_GRAY}"
+        else
+            echo -en "${COLOR_RESET}"
+        fi
+
+        local dayName=$(date -d "$day" +%a)
+        printf "%s | %s |" "$dayName" "$day"
+
+        declare -a commits_per_hour
+        local h
+        for h in {0..23}; do
+            commits_per_hour[$h]=0
+        done
+
+        IFS=$'\n' commits_per_hour=($(
+            git log --since="$day 00:00" --until="$day 23:59" --pretty=format:"%ci" 2>/dev/null |
+            awk '{split($2, t, ":"); h = t[1]+0; c[h]++} END {for(i=0;i<24;i++) print c[i]+0}'
+        ))
+        unset IFS
+
+        local h
+        for h in {0..23}; do
+            local count=${commits_per_hour[$h]}
+            local color=$(color_for_count "$count")
+            if (( count == 0 )); then
+                echo -en " ${COLOR_GRAY}.${COLOR_RESET} "
+            else
+                echo -en "${color} █ ${COLOR_RESET}"
+            fi
+        done
+        echo 
+    done
+    echo "------------------------------------------------------------------------------------------"
+
+    echo -e "\nLegend:"
+    echo -e " ${COLOR_BRIGHT_YELLOW}█${COLOR_RESET} 1 commit"
+    echo -e " ${COLOR_GOLD}█${COLOR_RESET} 2 commits"
+    echo -e " ${COLOR_ORANGE}█${COLOR_RESET} 3 commits"
+    echo -e " ${COLOR_DARK_ORANGE}█${COLOR_RESET} 4 commits"
+    echo -e " ${COLOR_RED_ORANGE}█${COLOR_RESET} 5 commits"
+    echo -e " ${COLOR_RED}█${COLOR_RESET} 6 commits"
+    echo -e " ${COLOR_DARK_RED}█${COLOR_RESET} 7–8 commits"
+    echo -e " ${COLOR_DEEP_RED}█${COLOR_RESET} 9–10 commits"
+    echo -e " ${COLOR_DARKEST_RED}█${COLOR_RESET} 11+ commits"
+    echo -e " ${COLOR_GRAY}.${COLOR_RESET} = no commits"
+    echo
 }
 
 ################################################################################
@@ -256,6 +369,12 @@ LIST OPTIONS
     -Z, --commits-by-author-by-timezone
         displays a list of commits per timezone by author
 
+CALENDAR OPTIONS
+    -k, --commits-calendar-by-author
+        shows a calendar heatmap of commits per day-of-week per month for a given author
+    -H, --commits-heatmap
+        shows a heatmap of commits per day-of-week per month for the last 30 days
+
 SUGGEST OPTIONS
     -r, --suggest-reviewers
         show the best people to contact to review code
@@ -283,7 +402,9 @@ ADDITIONAL USAGE
     You can set _GIT_IGNORE_AUTHORS to filter out specific authors
         ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\"
     You can sort contribution stats by field \"name\", \"commits\", \"insertions\", \"deletions\", or \"lines\" - total lines changed and order - \"asc\", \"desc\"
-        ex: export _GIT_SORT_BY=\"name-asc\""
+        ex: export _GIT_SORT_BY=\"name-asc\"
+    You can set _GIT_DAYS to set the number of days for the heatmap
+        ex: export _GIT_DAYS=30"
 }
 
 ################################################################################
@@ -293,12 +414,6 @@ ADDITIONAL USAGE
 ################################################################################
 function showMenu() {
     # These are "global" and can be overriden from users if so desired
-    NORMAL=$(tput sgr0)
-    CYAN=$(tput setaf 6)
-    BOLD=$(tput bold)
-    RED=$(tput setaf 1)
-    YELLOW=$(tput setaf 3)
-    WHITE=$(tput setaf 7)
     TITLES=""
     TEXT=""
     NUMS=""
@@ -308,29 +423,29 @@ function showMenu() {
     # Adjustable color menu option
     case "${_theme}"  in
         "legacy" )
-            TITLES="${BOLD}${RED}"
-            TEXT="${NORMAL}${CYAN}"
-            NUMS="${BOLD}${YELLOW}"
-            HELP_TXT="${NORMAL}${YELLOW}"
-            EXIT_TXT="${BOLD}${RED}"
+            TITLES="${COLOR_BOLD}${COLOR_RED}"
+            TEXT="${COLOR_NORMAL}${COLOR_CYANL}"
+            NUMS="${COLOR_BOLD}${COLOR_YELLOW}"
+            HELP_TXT="${COLOR_NORMAL}${COLOR_YELLOW}"
+            EXIT_TXT="${COLOR_BOLD}${COLOR_RED}"
             ;;
         "none" )
-            TITLES="${BOLD}"
-            TEXT="${NORMAL}"
-            NUMS="${BOLD}"
-            HELP_TXT="${NORMAL}"
-            EXIT_TXT="${BOLD}"
+            TITLES="${COLOR_BOLD}"
+            TEXT="${COLOR_NORMAL}"
+            NUMS="${COLOR_BOLD}"
+            HELP_TXT="${COLOR_NORMAL}"
+            EXIT_TXT="${COLOR_BOLD}"
             ;;
         *)
-            TITLES="${BOLD}${CYAN}"
-            TEXT="${NORMAL}${WHITE}"
-            NUMS="${NORMAL}${BOLD}${WHITE}"
-            HELP_TXT="${NORMAL}${CYAN}"
-            EXIT_TXT="${BOLD}${CYAN}"
+            TITLES="${COLOR_BOLD}${COLOR_CYANL}"
+            TEXT="${COLOR_NORMAL}${COLOR_WHITE}"
+            NUMS="${COLOR_NORMAL}${COLOR_BOLD}${COLOR_WHITE}"
+            HELP_TXT="${COLOR_NORMAL}${COLOR_CYANL}"
+            EXIT_TXT="${COLOR_BOLD}${COLOR_CYANL}"
             ;;
     esac
 
-    printf %b "\\n${TITLES} Generate:${NORMAL}\\n"
+    printf %b "\\n${TITLES} Generate:${COLOR_NORMAL}\\n"
     printf %b "${NUMS}    1)${TEXT} Contribution stats (by author)\\n"
     printf %b "${NUMS}    2)${TEXT} Contribution stats (by author) on a specific branch\\n"
     printf %b "${NUMS}    3)${TEXT} Git changelogs (last $_limit days)\\n"
@@ -357,8 +472,9 @@ function showMenu() {
     printf %b "${NUMS}   22)${TEXT} Code reviewers (based on git history)\\n"
     printf %b "\\n${TITLES} Calendar:\\n"
     printf %b "${NUMS}   23)${TEXT} Activity calendar by author\\n"
+    printf %b "${NUMS}   24)${TEXT} Activity heatmap for the last $_commit_days days\\n"
     printf %b "\\n${HELP_TXT}Please enter a menu option or ${EXIT_TXT}press Enter to exit.\\n"
-    printf %b "${TEXT}> ${NORMAL}"
+    printf %b "${TEXT}> ${COLOR_NORMAL}"
     read -r opt
 }
 
@@ -1275,13 +1391,14 @@ if [[ "$#" -eq 1 ]]; then
                 read -r -p "Which author? " author
             done
             commitsByTimezone "${author}";;
-        # ACTIVITY OPTIONS
+        # CALENDAR OPTIONS
         -k|--commits-calendar-by-author)
             author="${_GIT_AUTHOR:-}"
             while [[ -z "${author}" ]]; do
                 read -r -p "Which author? " author
             done
             commitsCalendarByAuthor "${author}";;
+        -H|--commits-heatmap) commitsHeatmap;;
         # SUGGEST OPTIONS
         -r|--suggest-reviewers) suggestReviewers;;
         -h|-\?|--help) usage;;
@@ -1374,6 +1491,7 @@ if [[ "$#" -eq 0 ]]; then
                     read -r -p "Which author? " author
                 done
                 commitsCalendarByAuthor "${author}"; showMenu;;
+           24) commitsHeatmap; showMenu;;
            q|"\n") exit;;
            *) clear; optionPicked "Pick an option from the menu"; showMenu;;
         esac

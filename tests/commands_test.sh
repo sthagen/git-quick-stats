@@ -73,6 +73,12 @@ LIST OPTIONS
     -Z, --commits-by-author-by-timezone
         displays a list of commits per timezone by author
 
+CALENDAR OPTIONS
+    -k, --commits-calendar-by-author
+        shows a calendar heatmap of commits per day-of-week per month for a given author
+    -H, --commits-heatmap
+        shows a heatmap of commits per day-of-week per month for the last 30 days
+
 SUGGEST OPTIONS
     -r, --suggest-reviewers
         show the best people to contact to review code
@@ -100,7 +106,9 @@ ADDITIONAL USAGE
     You can set _GIT_IGNORE_AUTHORS to filter out specific authors
         ex: export _GIT_IGNORE_AUTHORS=\"(author1|author2)\"
     You can sort contribution stats by field \"name\", \"commits\", \"insertions\", \"deletions\", or \"lines\" - total lines changed and order - \"asc\", \"desc\"
-        ex: export _GIT_SORT_BY=\"name-asc\""
+        ex: export _GIT_SORT_BY=\"name-asc\"
+    You can set _GIT_DAYS to set the number of days for the heatmap
+        ex: export _GIT_DAYS=30"
 
 assert_raises "$src fail" 1
 

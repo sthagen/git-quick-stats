@@ -173,7 +173,7 @@ function commitsHeatmap() {
 
     color_for_count() {
         local n=$1
-        if (( n == 0 )); then
+        if (( n == 1 )); then
             echo -n "${COLOR_BRIGHT_YELLOW}"
         elif (( n < 2 )); then
             echo -n "${COLOR_GOLD}"
@@ -194,7 +194,7 @@ function commitsHeatmap() {
         fi
     }
 
-    printf "Day | Date-Hours |"
+    printf "Day | Date/Hours |"
     local h
     for h in {0..23}; do
         printf " %2d" "$h"
@@ -206,9 +206,9 @@ function commitsHeatmap() {
     for i in $(seq $((_commit_days-1)) -1 0); do
         local day=$(date -d "-$i days" +"%Y-%m-%d")
         if [[ $(date -d "$day" +%u) -gt 5 ]]; then
-            printf "\e[1;30m"
+            echo -en "${COLOR_GRAY}"
         else
-            printf "\e[0m"
+            echo -en "${COLOR_RESET}"
         fi
 
         local dayName=$(date -d "$day" +%a)
@@ -231,9 +231,9 @@ function commitsHeatmap() {
             local count=${commits_per_hour[$h]}
             local color=$(color_for_count "$count")
             if (( count == 0 )); then
-                printf " \e[90m.\e[0m "
+                echo -en " ${COLOR_GRAY}.${COLOR_RESET} "
             else
-                printf "%b █ \e[0m" "$color"
+                echo -en "${color} █ ${COLOR_RESET}"
             fi
         done
         echo 

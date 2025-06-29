@@ -19,6 +19,10 @@ This program allows you to see detailed information about a git repository.
 .PP
 .SH GENERATE OPTIONS
 .PP
+\fB\-h\fR, \-?, \fB\-\-help\fR
+.IP
+display this help text in the terminal
+.PP
 \fB\-T\fR, \fB\-\-detailed\-git\-stats\fR
 .IP
 give a detailed list of git stats
@@ -136,9 +140,12 @@ displays a calendar-style grid of commit activity per day-of-week and month for 
 show the best people to contact to review code
 .HP
 .PP
-\fB\-h\fR, \-?, \fB\-\-help\fR
-.IP
-display this help text in the terminal
+.SH CALENDAR OPTIONS
+.PP
+\fB\-k\fR, \fB\-\-commits\-calendar\-by\-author\fR outputs a visual grid of commit activity for a selected author, grouped by day-of-week (rows: Mon..Sun) and month (columns: Jan..Dec). Each cell is 3 characters wide, separated by one space.
+.PP
+.PP
+\fB\-H\fR, \fB\-\-commits\-heatmap\fR shows a heatmap of commits per day per hour for the last 30 days
 .PP
 .SH ADDITIONAL USAGE
 You can set _GIT_SINCE and _GIT_UNTIL to limit the git time log, example:
@@ -180,27 +187,13 @@ You can set _GIT_BRANCH to set the branch of the stats, example:
 .PP
 .B  export _GIT_BRANCH="master"
 .PP
-.SH Calendar activity output
-.PP
-\fBactivity-calendar\fR outputs a visual grid of commit activity for a selected author, grouped by day-of-week (rows: Mon..Sun) and month (columns: Jan..Dec). Each cell is 3 characters wide, separated by one space.
-.PP
-Sample output:
-.PP
-.nf
-      Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
-Mon   ▓▓▓ ░░░ ▒▒▒ ░░░ ░░░ ▒▒▒ ▓▓▓ ░░░ ░░░ ▓▓▓ ▒▒▒ ▒▒▒
-Tue   ▒▒▒ ░░░ ▒▒▒ ░░░ ▒▒▒ ░░░ ▒▒▒ ▓▓▓ ▒▒▒ ░░░ ░░░ ░░░
-Wed   ░░░ ▓▓▓ ░░░ ▓▓▓ ▒▒▒ ░░░ ░░░ ▒▒▒ ░░░ ░░░ ▓▓▓ ░░░
-Thu   ░░░ ▒▒▒ ░░░ ░░░ ▒▒▒ ░░░ ▓▓▓ ▒▒▒ ▒▒▒ ░░░ ░░░ ▒▒▒
-Fri   ▒▒▒ ░░░ ▒▒▒ ▓▓▓ ░░░ ▓▓▓ ▒▒▒ ░░░ ▒▒▒ ░░░ ▒▒▒ ░░░
-Sat   ░░░ ░░░ ▒▒▒ ░░░ ░░░ ░░░ ▒▒▒ ░░░ ▒▒▒ ▓▓▓ ▒▒▒ ░░░
-Sun   ▓▓▓ ░░░ ▓▓▓ ░░░ ░░░ ▓▓▓ ░░░ ▒▒▒ ░░░ ░░░ ▓▓▓ ░░░
-
-Legend: ... = 0   ░░░ = 1–2   ▒▒▒ = 3–5   ▓▓▓ = 6+ commits
-.PP
 You can set _GIT_IGNORE_AUTHORS to filter out specific authors, example:
 .PP
 .B  export _GIT_IGNORE_AUTHORS="(author@examle.com|username)"
+.PP
+You can set _GIT_DAYS to set the number of days for the heatmap, example:
+.PP
+.B  export _GIT_DAYS=30"
 .
 .fi
 

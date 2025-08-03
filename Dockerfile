@@ -4,7 +4,7 @@ FROM alpine
 COPY . /app
 
 # Install required packages & build git-quick-stats
-RUN     apk add --no-cache bash git make ncurses util-linux \
+RUN     apk add --no-cache bash git make ncurses coreutils util-linux \
     &&  cd /app \
     &&  make install \
     &&  rm -rf /app \

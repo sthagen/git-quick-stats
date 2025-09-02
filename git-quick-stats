@@ -138,7 +138,7 @@ function commitsCalendarByAuthor() {
             cmd | getline weekday;
             close(cmd); 
             # weekday: 1=Mon, ..., 7=Sun
-            count[weekday][mon]++; 
+            count[weekday * 12 + mon]++;
         }
         END {
             # Output matrix
@@ -151,7 +151,7 @@ function commitsCalendarByAuthor() {
                 else if (d==6) printf "Sat   ";
                 else if (d==7) printf "Sun   "; 
                 for (m=1; m<=12; m++) {
-                    c = count[d][m]+0; 
+                    c = count[d * 12 + m]+0;
                     if (c==0) 
                         out="...";
                     else if (c<=9)  
